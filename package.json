@@ -1,0 +1,47 @@
+{
+  "name": "@rcpch/imd-map",
+  "version": "0.1.0",
+  "description": "UK IMD choropleth map library — renders deprivation tiles with patient and lead-centre overlays",
+  "type": "module",
+  "main": "dist/umd/rcpch-imd-map.min.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "default": "./dist/umd/rcpch-imd-map.min.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "maplibre-gl": ">=3.6.0 <6"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.14",
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "maplibre-gl": "^4.7.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": ["imd", "map", "maplibre", "choropleth", "uk", "deprivation", "rcpch"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rcpch/rcpch-mapping-component.git"
+  }
+}

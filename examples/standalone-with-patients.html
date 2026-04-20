@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>rcpch-imd-map — patients + lead centre example</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f5f5f5; }
+    header { background: #0d0d58; color: #fff; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
+    header h1 { font-size: 1rem; font-weight: 600; }
+    #map { width: 100%; height: calc(100vh - 3rem); }
+    #controls {
+      position: absolute; top: 3.5rem; left: 1rem; z-index: 10;
+      background: #fff; border-radius: 6px; padding: 0.75rem 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 0.85rem;
+    }
+    #controls button {
+      display: block; width: 100%; margin-top: 0.5rem; padding: 0.4rem 0.75rem;
+      background: #0d0d58; color: #fff; border: none; border-radius: 4px; cursor: pointer;
+    }
+    #controls button:hover { background: #e00087; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>UK IMD Map — patient scatter + lead centre example</h1>
+  </header>
+
+  <div id="map"></div>
+
+  <div id="controls">
+    <strong>Controls</strong>
+    <button onclick="togglePatients()">Toggle patients</button>
+    <button onclick="switchNation('england')">England only</button>
+    <button onclick="switchNation('all')">All UK</button>
+  </div>
+
+  <script src="../dist/umd/rcpch-imd-map.min.js"></script>
+  <script>
+    const tilesBaseUrl = window.RCPCH_DEPRIVATION_TILES_URL || '';
+
+    // Sample patient data — replace with real coordinates from your system
+    const patients = [
+      { id: 'patient-1', lat: 51.5074, lon: -0.1278, group: 'type1' },
+      { id: 'patient-2', lat: 53.4808, lon: -2.2426, group: 'type1' },
+      { id: 'patient-3', lat: 52.4862, lon: -1.8904, group: 'type2' },
+      { id: 'patient-4', lat: 51.4816, lon: -3.1791, group: 'type1' },
+      { id: 'patient-5', lat: 55.8642, lon: -4.2518, group: 'type2' },
+    ];
+
+    const leadCentre = {
+      lat: 51.5202,
+      lon: -0.1049,
+      label: 'Example Lead Centre (London)',
+    };
+
+    const map = RcpchImdMap.createImdMap({
+      container: 'map',
+      tilesBaseUrl: tilesBaseUrl,
+      initialNation: 'all',
+      initialEra: '2021',
+
+      style: {
+        choropleth: {
+          fallbackDecileColors: [
+            '#7a0036','#a3004b','#c92e6f','#de5f92','#eba0ba',
+            '#f3bfd0','#f8d7e2','#fce8ef','#fff0f6','#fff5f8',
+          ],
+          fillOpacity: 0.7,
+        },
+        patients: {
+          circleColor: '#0d0d58',
+          circleRadius: 6,
+          circleStrokeColor: '#ffffff',
+          circleStrokeWidth: 1.5,
+          circleOpacity: 0.85,
+        },
+        leadCentre: {
+          color: '#e00087',
+          radius: 12,
+          strokeColor: '#ffffff',
+          strokeWidth: 2,
+        },
+        tooltip: {
+          backgroundColor: '#0d0d58',
+          textColor: '#ffffff',
+          areaLabel: 'Area',
+          decileLabel: 'IMD decile',
+          patientLabel: 'Child',
+          leadCentreLabel: 'Lead centre',
+        },
+      },
+
+      onAreaClick: function (payload) {
+        console.log('[demo] area clicked', payload);
+      },
+      onWarning: function (w) {
+        console.warn('[demo]', w.code, w.message);
+      },
+    });
+
+    map.setPatients(patients);
+    map.setLeadCentre(leadCentre);
+
+    // ── Control helpers ──────────────────────────────────────────────────────
+    let patientsVisible = true;
+
+    function togglePatients() {
+      if (patientsVisible) {
+        map.clearPatients();
+      } else {
+        map.setPatients(patients);
+      }
+      patientsVisible = !patientsVisible;
+    }
+
+    function switchNation(nation) {
+      map.setNation(nation);
+    }
+
+    window._map = map;
+  </script>
+</body>
+</html>

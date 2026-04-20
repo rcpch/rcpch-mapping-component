@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>rcpch-imd-map — standalone example</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f5f5f5; }
+    header { background: #0d0d58; color: #fff; padding: 1rem 1.5rem; }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    #map { width: 100%; height: calc(100vh - 3.5rem); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>UK IMD Choropleth — standalone example (UMD bundle)</h1>
+  </header>
+
+  <div id="map"></div>
+
+  <!--
+    The self-contained IIFE bundle includes MapLibre GL and MapLibre CSS.
+    Replace the path below with the built dist/umd/rcpch-imd-map.min.js
+    after running `npm run build`.
+  -->
+  <script src="../dist/umd/rcpch-imd-map.min.js"></script>
+  <script>
+    /**
+     * For local development, set window.RCPCH_DEPRIVATION_TILES_URL to your tile server
+     * before this script runs, e.g. in a <script> block higher up the page:
+     *
+     *   window.RCPCH_DEPRIVATION_TILES_URL = 'http://localhost:7800';
+     */
+    const tilesBaseUrl = window.RCPCH_DEPRIVATION_TILES_URL || '';
+
+    const map = RcpchImdMap.createImdMap({
+      container: 'map',
+      tilesBaseUrl: tilesBaseUrl,
+      initialNation: 'all',
+      initialEra: '2021',
+
+      style: {
+        choropleth: {
+          fillOpacity: 0.75,
+          borderColor: '#ffffff',
+          borderWidth: 0.5,
+        },
+        tooltip: {
+          backgroundColor: '#0d0d58',
+          textColor: '#ffffff',
+          areaLabel: 'Area',
+          decileLabel: 'IMD decile',
+        },
+      },
+
+      onViewChange: function (view) {
+        console.log('[demo] view changed', view);
+      },
+      onWarning: function (warning) {
+        console.warn('[demo] warning', warning.code, warning.message);
+      },
+    });
+
+    // Expose the instance for debugging in the browser console
+    window._map = map;
+  </script>
+</body>
+</html>
