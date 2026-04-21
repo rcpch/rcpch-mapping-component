@@ -115,6 +115,14 @@ context = {
       document.getElementById('organisation-cases-map-payload').textContent
     );
 
+    // Django-safe literal tokens for the map library's tooltip interpolation
+    var token = {
+      patientLabel: '{% templatetag openvariable %}patientLabel{% templatetag closevariable %}',
+      id: '{% templatetag openvariable %}id{% templatetag closevariable %}',
+      leadCentreLabel: '{% templatetag openvariable %}leadCentreLabel{% templatetag closevariable %}',
+      label: '{% templatetag openvariable %}label{% templatetag closevariable %}'
+    };
+
     var map = RcpchImdMap.createImdMap({
       container: 'organisation-cases-map',
       tilesBaseUrl: window.RCPCH_DEPRIVATION_TILES_URL,
@@ -125,8 +133,8 @@ context = {
         tooltip: {
           areaLabel: 'Local area',
           patientLabel: 'Child',
-          patientTooltipText: '{{patientLabel}}: {{id}}', // show patient id in tooltip
-          leadCentreTooltipText: '{{leadCentreLabel}}: {{label}}',
+          patientTooltipText: token.patientLabel + ': ' + token.id,
+          leadCentreTooltipText: token.leadCentreLabel + ': ' + token.label,
           backgroundColor: '#0d0d58',
           textColor: '#ffffff',
         },
@@ -239,6 +247,17 @@ createImdMap({
 ### Tooltip templates
 
 `patientTooltipText` and `leadCentreTooltipText` support `{{token}}` interpolation.
+
+If you are writing inline JavaScript inside a Django template, Django will try to
+evaluate `{{...}}` first. Use one of these patterns so the map library still
+receives literal tokens:
+
+1. Use `{% templatetag openvariable %}` and `{% templatetag closevariable %}`
+  to emit literal `{{` and `}}` (shown in the Django example above).
+2. Wrap only the relevant JavaScript block in `{% verbatim %}...{% endverbatim %}`
+  when you do not need Django variable interpolation inside that block.
+3. Build the token string server-side (for example in your view context) and pass
+  it in your JSON payload.
 
 **Patient tokens** (`patientTooltipText`):
 
