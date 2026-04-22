@@ -10,6 +10,22 @@ Upstream tile/data source: [`rcpch/rcpch-census-platform`](https://github.com/rc
 
 Live demo: [rcpch.github.io/rcpch-census-platform/](https://rcpch.github.io/rcpch-census-platform/)
 
+Release integrity: run `npm pack --json` for npm `shasum` / `integrity`, or `npm run release:checksums` after packing to generate `release-checksums.json` with SHA hashes for the tarball and built bundles.
+
+## CI and release automation
+
+- Pushes to `main` and all pull requests run automated validation via `.github/workflows/ci.yml`:
+  - `npm ci`
+  - `npm test`
+  - `npm run build`
+- Publishing is handled by `.github/workflows/release.yml` when a GitHub release is published:
+  - `npm ci`
+  - `npm test`
+  - `npm run build`
+  - `npm publish --provenance --access public`
+
+For npm publish to succeed, configure npm Trusted Publishing for this GitHub repository/package pair.
+
 ---
 
 ## What problem does this solve?
@@ -65,6 +81,8 @@ The UMD bundle includes MapLibre GL. No separate script tag required.
   });
 </script>
 ```
+
+If you need release-grade checksum verification for the published bundle or packed tarball, generate hashes locally with `npm pack --json` and `npm run release:checksums` before publishing.
 
 ---
 

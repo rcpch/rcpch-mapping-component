@@ -39,7 +39,8 @@ For project structure, test locations, tile contracts, and agent-oriented implem
 
 - [ ] Reserve npm package name `@rcpch/imd-map`
 - [x] Add `LICENSE` file (MIT)
-- [ ] Run `npm pack` and inspect tarball before publishing
+- [x] Run `npm pack` and inspect tarball before publishing
+- [x] Generate SHA metadata for packed tarball and built bundles (`npm run release:checksums`)
 - [ ] Tag `v0.1.0` and run `npm publish --access public`
 - [ ] Verify CDN URL: `https://cdn.jsdelivr.net/npm/@rcpch/imd-map@0.1.0/dist/umd/rcpch-imd-map.min.js`
 
@@ -206,8 +207,8 @@ document.addEventListener('htmx:beforeSwap', function (evt) {
 - [x] NPDA Step 8 verification checklist passed on a real NPDA environment
 - [ ] `examples/standalone.html` loads correctly from a local file server (`npx serve examples/`)
 - [ ] `examples/standalone-with-patients.html` plots patient points correctly
-- [ ] `npm pack` tarball contains only `dist/`, `README.md`, `CHANGELOG.md`, `package.json`
+- [x] `npm pack` tarball contains `dist/`, `README.md`, `CHANGELOG.md`, `LICENSE`, and `package.json`
 - [ ] Package name `@rcpch/imd-map` reserved on npmjs.com
 - [x] `LICENSE` file present
-- [ ] CHANGELOG entry for `0.1.0` is accurate and dated
+- [x] CHANGELOG entry for `0.1.0` is accurate and dated
 - [x] GitHub Actions CI workflow added: `npm test` + `npm run build` on push/PR

@@ -54,6 +54,7 @@ It complements, not replaces, the consumer-facing documentation in `README.md`.
 - Typecheck: `npm run typecheck`
 
 CI runs `npm test` then `npm run build` on push and pull request via `.github/workflows/ci.yml`.
+Publishing runs via `.github/workflows/release.yml` when a GitHub release is published; it re-runs install, test, and build, then publishes to npm with GitHub OIDC trusted publishing.
 
 ## Distribution outputs
 
@@ -197,11 +198,12 @@ Before publishing:
 1. Run `npm run typecheck`
 2. Run `npm test`
 3. Run `npm run build`
-4. Run `npm pack` and inspect tarball contents
-5. Confirm `CHANGELOG.md` and package version are aligned
-6. Confirm npm package ownership/reservation
-7. Tag release and publish
-8. Verify jsDelivr CDN URL for the published UMD bundle
+4. Run `npm pack --json` and inspect tarball contents, `shasum`, and npm `integrity`
+5. Run `npm run release:checksums` to generate `release-checksums.json` for the tarball and built bundles
+6. Confirm `CHANGELOG.md` and package version are aligned
+7. Confirm npm package ownership/reservation
+8. Tag release and publish
+9. Verify jsDelivr CDN URL for the published UMD bundle
 
 ## Editing guidance for future agents
 

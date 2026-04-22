@@ -8,18 +8,6 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### New
-
-- Local authority and health boundary overlays (NHSER, ICB, LHB) via `setOverlayVisibility` and startup flags.
-- Patient group color mapping support via `style.patients.colorByGroup`.
-- Collapsible corner legend with clickable overlay toggles and per-row visibility controls.
-- MIT `LICENSE` file.
-- GitHub Actions CI workflow running `npm test` and `npm run build` on push/PR.
-
-### Updated
-
-- `fitToData` now fits to all plotted points (patients + lead centre), with optional padding for multi-point bounds.
-
 ## [0.1.0] — 2026-04-20
 
 ### Added
@@ -30,6 +18,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Runtime style overrides for choropleth colors, fill opacity, border colors, patient circle styling, lead-centre styling, and tooltip labels/colors.
 - `setPatients` — accepts plain record arrays, GeoJSON FeatureCollection, or Feature arrays.
 - `setLeadCentre` — accepts a plain coordinate object or GeoJSON point feature.
+- Local authority and health boundary overlays (NHSER, ICB, LHB) via `setOverlayVisibility` and startup flags.
+- Collapsible corner legend with clickable overlay toggles, compact key, and per-row visibility controls.
+- Patient group color mapping support via `style.patients.colorByGroup`.
+- MIT `LICENSE` file.
+- GitHub Actions CI workflow running `npm test` and `npm run build` on push/PR.
 - Built-in hover tooltip showing area name, IMD decile, and nation.
 - `onAreaHover`, `onAreaClick`, `onViewChange`, and `onWarning` event hooks.
 - ESM build (`dist/index.esm.js`) — maplibre-gl as peer dependency.
@@ -37,3 +30,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - TypeScript declarations (`dist/index.d.ts`).
 - Unit tests for era resolver, coordinate validation, property alias lookup, and patient input normalization.
 - Standalone HTML examples covering basic usage and patient overlay.
+
+### Changed
+
+- `fitToData` now fits to all plotted points (patients + lead centre), with optional padding for multi-point bounds.

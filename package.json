@@ -19,7 +19,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release:checksums": "node scripts/release-checksums.mjs"
   },
   "peerDependencies": {
     "maplibre-gl": ">=3.6.0 <6"
@@ -36,7 +37,8 @@
   "files": [
     "dist",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "keywords": ["imd", "map", "maplibre", "choropleth", "uk", "deprivation", "rcpch"],
   "license": "MIT",
