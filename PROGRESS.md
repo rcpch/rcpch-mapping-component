@@ -115,6 +115,7 @@ Out-of-bounds points are always skipped (never plotted). In default mode, invali
 - `src/map/layers.ts` — 3-tier fill/line layers with nation filter, patient + lead-centre circle layers
 - `src/map/popups.ts` — tooltip builder (`area_name`, `imd_decile`, `nation`), hover/click handlers across all fill layers
 - `src/map/styles.ts` — RCPCH colour ramps per nation, `mergeStyle()`, `getDecileColors()`
+- `src/map/legend.ts` — collapsible in-map legend with clickable overlay toggles and configurable styling
 - `src/adapters/patientInput.ts` — normalise PatientInput to GeoJSON features
 - `src/overlays/leadCentre.ts` — normalise LeadCentreInput to GeoJSON feature
 - `src/index.ts` — public entry point
@@ -132,8 +133,13 @@ Out-of-bounds points are always skipped (never plotted). In default mode, invali
 
 - `README.md` — npm quickstart, CDN quickstart, Django/HTMX template example, API reference
 - `CHANGELOG.md` — initial 0.1.0 entry
+- `LICENSE` — MIT
 - `examples/standalone.html` — static HTML + UMD bundle
 - `examples/standalone-with-patients.html` — static HTML + patient overlay
+
+### CI ✅
+
+- `.github/workflows/ci.yml` — clean checkout workflow running `npm test` then `npm run build` on push and pull request
 
 ---
 
@@ -144,23 +150,32 @@ Out-of-bounds points are always skipped (never plotted). In default mode, invali
 - [x] ~~Confirm tsup IIFE output filename~~ — fixed: `outExtension: () => ({ js: '.js' })` in `tsup.config.ts`. Output is now `dist/umd/rcpch-imd-map.min.js` directly.
 - [x] **Per-nation color rendering in all-UK mode** — `buildColorExpression()` returns `match` on `nation` property, so England/Wales/Scotland/NI each render in their own color family
 - [x] **Arbitrary extra property tokens in tooltips** — all feature properties (e.g. `nhs_number`) available as `{{tokenName}}` in `patientTooltipText` template
-- [x] **fitToData() working correctly** — centers on lead centre, zoom to configurable level (default 6), properly queued before map load, deferred to idle event
+- [x] **fitToData() working correctly** — fits to lead centre and patient points; uses bounds + configurable padding for multi-point data, single-point fallback zoom (default 6), queued before map load and deferred to idle event
 
-### Phase 2 — Overlays (stubs only, not yet implemented)
+### Phase 2 — Overlays ✅
 
-- [ ] `src/overlays/localAuthority.ts` — LA boundary tile source + layer
-- [ ] `src/overlays/healthBoundaries.ts` — NHSER / ICB / LHB boundary sources + layers
-- [ ] `setOverlayVisibility()` in `createImdMap.ts` — currently a no-op stub
+- [x] `src/overlays/localAuthority.ts` — LA boundary tile source + line layer
+- [x] `src/overlays/healthBoundaries.ts` — NHSER / ICB / LHB boundary sources + line layers
+- [x] `setOverlayVisibility()` in `createImdMap.ts` — toggles boundary overlays at runtime
 
 ### Phase 3 — Patient layer enhancements
 
-- [ ] Group colour mapping via `PatientStyleOptions.colorByGroup`
+- [x] Group colour mapping via `PatientStyleOptions.colorByGroup`
 - [ ] Clustering / heatmap mode
+
+### UX Enhancements ✅
+
+- [x] Collapsible corner legend control
+- [x] Clickable legend labels to toggle boundary overlays (`nhser`, `icb`, `localAuthority`, optional `lhb`)
+- [x] Legend visibility options for each overlay row (show/hide unused options)
+- [x] Legend style props (background, text, border, sizing, toggle colors)
+- [x] Compact legend key section (boundary line swatches + IMD decile ramp)
+- [x] Overlay source-layer defaults aligned with census platform views (`public.la_tiles`, `public.nhser_tiles_2021`, `public.icb_tiles_2023`, `public.lhb_tiles_2022`)
 
 ### Phase 4 — Packaging and release
 
 - [ ] Reserve npm package name `@rcpch/imd-map`
-- [ ] Add `LICENSE` file (Apache 2.0 or MIT — confirm)
+- [x] Add `LICENSE` file (MIT)
 - [ ] Run `npm pack` and inspect tarball before publishing
 - [ ] Tag `v0.1.0` and run `npm publish --access public`
 - [ ] Verify CDN URL: `https://cdn.jsdelivr.net/npm/@rcpch/imd-map@0.1.0/dist/umd/rcpch-imd-map.min.js`
@@ -330,6 +345,6 @@ document.addEventListener('htmx:beforeSwap', function (evt) {
 - [ ] `examples/standalone-with-patients.html` plots patient points correctly
 - [ ] `npm pack` tarball contains only `dist/`, `README.md`, `CHANGELOG.md`, `package.json`
 - [ ] Package name `@rcpch/imd-map` reserved on npmjs.com
-- [ ] `LICENSE` file present
+- [x] `LICENSE` file present
 - [ ] CHANGELOG entry for `0.1.0` is accurate and dated
-- [ ] GitHub Actions CI: `npm test` + `npm run build` pass on a clean checkout
+- [x] GitHub Actions CI workflow added: `npm test` + `npm run build` on push/PR

@@ -86,6 +86,23 @@ function firstSymbolLayerId(map: MaplibreMap): string | undefined {
   return undefined;
 }
 
+export function buildPatientCircleColorExpression(
+  style: Required<MapStyleOptions>,
+): string | unknown[] {
+  const fallback = style.patients.circleColor ?? '#0d0d58';
+  const groupMap = style.patients.colorByGroup ?? {};
+  const entries = Object.entries(groupMap).filter(([k, v]) => k && v);
+
+  if (!entries.length) return fallback;
+
+  return [
+    'match',
+    ['coalesce', ['to-string', ['get', 'group']], ''],
+    ...entries.flatMap(([group, color]) => [group, color]),
+    fallback,
+  ];
+}
+
 // ── Choropleth layers (3 per view) ────────────────────────────────────────────
 //
 // One fill + one line layer per zoom tier. Each pair is constrained to its
@@ -201,9 +218,10 @@ export function addOrUpdatePatientsLayer(
   style: Required<MapStyleOptions>,
 ): void {
   const p = style.patients;
+  const color = buildPatientCircleColorExpression(style);
 
   if (map.getLayer(PATIENTS_LAYER_ID)) {
-    map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-color', p.circleColor ?? '#0d0d58');
+    map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-color', color as any);
     map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-radius', p.circleRadius ?? 5);
     map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-stroke-color', p.circleStrokeColor ?? '#ffffff');
     map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-stroke-width', p.circleStrokeWidth ?? 1);
@@ -214,7 +232,7 @@ export function addOrUpdatePatientsLayer(
       type: 'circle',
       source: PATIENTS_SOURCE_ID,
       paint: {
-        'circle-color': p.circleColor ?? '#0d0d58',
+        'circle-color': color as any,
         'circle-radius': p.circleRadius ?? 5,
         'circle-stroke-color': p.circleStrokeColor ?? '#ffffff',
         'circle-stroke-width': p.circleStrokeWidth ?? 1,

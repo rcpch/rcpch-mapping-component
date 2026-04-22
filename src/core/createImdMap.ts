@@ -37,6 +37,19 @@ import {
 } from '../map/popups';
 import { normalizePatientInput } from '../adapters/patientInput';
 import { normalizeLeadCentreInput } from '../overlays/leadCentre';
+import {
+  addOrUpdateLocalAuthorityOverlay,
+  hideLocalAuthorityOverlay,
+} from '../overlays/localAuthority';
+import {
+  addOrUpdateNhserOverlay,
+  addOrUpdateIcbOverlay,
+  addOrUpdateLhbOverlay,
+  hideNhserOverlay,
+  hideIcbOverlay,
+  hideLhbOverlay,
+} from '../overlays/healthBoundaries';
+import { createLegendControl, type LegendController } from '../map/legend';
 import { mergeStyle, DEFAULT_STYLE } from '../map/styles';
 import { logger } from '../utils/logging';
 
@@ -65,6 +78,32 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   // ── Resolve style and initial state ────────────────────────────────────────
   let resolvedStyle = mergeStyle(DEFAULT_STYLE, options.style);
   let state = createInitialState(options.initialNation ?? 'all', options.initialEra ?? '2021');
+
+  if (options.enableLocalAuthorityOverlay) {
+    state = { ...state, overlays: { ...state.overlays, localAuthority: true } };
+  }
+  if (options.enableHealthOverlays) {
+    state = {
+      ...state,
+      overlays: {
+        ...state.overlays,
+        nhser: true,
+        icb: true,
+        lhb: true,
+      },
+    };
+  }
+
+  const showLegend = options.showLegend ?? true;
+  const legendPosition = options.legendPosition ?? 'top-right';
+  const legendCollapsed = options.legendCollapsed ?? false;
+  const legendTitle = options.legendTitle ?? 'Map layers';
+  const legendVisibility = {
+    localAuthority: options.showLegendLocalAuthority ?? true,
+    nhser: options.showLegendNhser ?? true,
+    icb: options.showLegendIcb ?? true,
+    lhb: options.showLegendLhb ?? true,
+  };
 
   // Emit warning if the requested era will be silently overridden
   if (
@@ -151,6 +190,73 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     );
   }
 
+  function applyOverlayVisibility(): void {
+    if (!mapLoaded || !tilesBaseUrl) return;
+    const nation = state.nation;
+    const canShowNhser = nation === 'all' || nation === 'england';
+    const canShowIcb = nation === 'all' || nation === 'england';
+    const canShowLhb = nation === 'all' || nation === 'wales';
+
+    if (state.overlays.localAuthority) {
+      addOrUpdateLocalAuthorityOverlay(map, tilesBaseUrl, resolvedStyle);
+    } else {
+      hideLocalAuthorityOverlay(map);
+    }
+
+    if (state.overlays.nhser && canShowNhser) {
+      addOrUpdateNhserOverlay(map, tilesBaseUrl, resolvedStyle);
+    } else {
+      hideNhserOverlay(map);
+    }
+
+    if (state.overlays.icb && canShowIcb) {
+      addOrUpdateIcbOverlay(map, tilesBaseUrl, resolvedStyle);
+    } else {
+      hideIcbOverlay(map);
+    }
+
+    if (state.overlays.lhb && canShowLhb) {
+      addOrUpdateLhbOverlay(map, tilesBaseUrl, resolvedStyle);
+    } else {
+      hideLhbOverlay(map);
+    }
+  }
+
+  function setOverlayVisibilityState(input: {
+    localAuthority?: boolean;
+    nhser?: boolean;
+    icb?: boolean;
+    lhb?: boolean;
+  }): void {
+    state = { ...state, overlays: { ...state.overlays, ...input } };
+    applyOverlayVisibility();
+    legendController?.update(state, resolvedStyle);
+  }
+
+  let legendController: LegendController | null = null;
+  if (showLegend) {
+    legendController = createLegendControl({
+      container: containerEl,
+      position: legendPosition,
+      title: legendTitle,
+      collapsed: legendCollapsed,
+      style: resolvedStyle,
+      state,
+      visibility: legendVisibility,
+      onToggle: (key, nextValue) => {
+        if (key === 'localAuthority') {
+          setOverlayVisibilityState({ localAuthority: nextValue });
+        } else if (key === 'nhser') {
+          setOverlayVisibilityState({ nhser: nextValue });
+        } else if (key === 'icb') {
+          setOverlayVisibilityState({ icb: nextValue });
+        } else if (key === 'lhb') {
+          setOverlayVisibilityState({ lhb: nextValue });
+        }
+      },
+    });
+  }
+
   logger.debug(`tilesBaseUrl resolved to: "${tilesBaseUrl}"`);
 
   // ── Map load handler ────────────────────────────────────────────────────────
@@ -161,6 +267,8 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       addOrUpdateChoroplethSources(map, tilesBaseUrl, state.effectiveEra);
       addChoroplethLayers(map, state.nation, state.effectiveEra, resolvedStyle);
     }
+
+    applyOverlayVisibility();
 
     attachChoroplethInteraction(map, popup, resolvedStyle, options);
 
@@ -252,19 +360,19 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       resolvedStyle = mergeStyle(DEFAULT_STYLE, newStyle);
       if (mapLoaded) {
         updateChoroplethStyle(map, state.nation, resolvedStyle);
+        applyOverlayVisibility();
         if (state.hasPatients) {
           addOrUpdatePatientsLayer(map, resolvedStyle);
         }
         if (state.hasLeadCentre) {
           addOrUpdateLeadCentreLayer(map, resolvedStyle);
         }
+        legendController?.update(state, resolvedStyle);
       }
     },
 
     setOverlayVisibility(input) {
-      // Overlay layer management will be added in Phase 2.
-      state = { ...state, overlays: { ...state.overlays, ...input } };
-      logger.debug('setOverlayVisibility: boundary overlay layers will be implemented in Phase 2.');
+      setOverlayVisibilityState(input);
     },
 
     setPatients(data: PatientInput, patientOptions?: PatientLayerOptions) {
@@ -359,6 +467,7 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
 
     destroy() {
       popup.remove();
+      legendController?.destroy();
       map.remove();
     },
   };

@@ -79,12 +79,28 @@ export interface TooltipStyleOptions {
   leadCentreTooltipText?: string;
 }
 
+export type LegendPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+export interface LegendStyleOptions {
+  backgroundColor?: string;
+  textColor?: string;
+  borderColor?: string;
+  borderRadius?: number;
+  fontSize?: number;
+  fontFamily?: string;
+  width?: number;
+  boxShadow?: string;
+  toggleOnColor?: string;
+  toggleOffColor?: string;
+}
+
 export interface MapStyleOptions {
   choropleth?: ChoroplethStyleOptions;
   boundaries?: BoundaryStyleOptions;
   patients?: PatientStyleOptions;
   leadCentre?: LeadCentreStyleOptions;
   tooltip?: TooltipStyleOptions;
+  legend?: LegendStyleOptions;
 }
 
 // ── Map state ─────────────────────────────────────────────────────────────────
@@ -181,6 +197,14 @@ export interface CreateImdMapOptions {
   showDefaultControls?: boolean;
   enableLocalAuthorityOverlay?: boolean;
   enableHealthOverlays?: boolean;
+  showLegend?: boolean;
+  legendPosition?: LegendPosition;
+  legendCollapsed?: boolean;
+  showLegendLocalAuthority?: boolean;
+  showLegendNhser?: boolean;
+  showLegendIcb?: boolean;
+  showLegendLhb?: boolean;
+  legendTitle?: string;
   /** MapLibre GL style URL. Defaults to Carto Positron. */
   mapStyleUrl?: string;
   /** Initial map center as [longitude, latitude]. */

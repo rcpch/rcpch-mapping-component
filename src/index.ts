@@ -16,6 +16,8 @@ export type {
   PatientStyleOptions,
   LeadCentreStyleOptions,
   TooltipStyleOptions,
+  LegendStyleOptions,
+  LegendPosition,
   PatientInput,
   PatientRecord,
   PatientLayerOptions,

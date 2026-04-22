@@ -218,6 +218,7 @@ createImdMap({
     },
     boundaries: {
       localAuthorityColor: '#0d0d58',
+      icbColor: '#3d3d3d',
       localAuthorityWidth: 1,
     },
     patients: {
@@ -228,6 +229,15 @@ createImdMap({
     leadCentre: {
       color: '#e00087',
       radius: 10,
+    },
+    legend: {
+      backgroundColor: '#ffffff',
+      textColor: '#0d0d58',
+      borderColor: '#d8dde6',
+      borderRadius: 8,
+      width: 220,
+      toggleOnColor: '#0d0d58',
+      toggleOffColor: '#6b7280',
     },
     tooltip: {
       backgroundColor: '#0d0d58',
@@ -305,6 +315,16 @@ map.setStyle({ tooltip: { areaLabel: 'Local area' } });
 | `tilesBaseUrl` | `string` | — | Base URL of the tile server |
 | `initialNation` | `Nation` | `'all'` | Starting nation filter |
 | `initialEra` | `Era` | `'2021'` | Requested era (may be overridden) |
+| `enableLocalAuthorityOverlay` | `boolean` | `false` | Show local authority boundary overlay at startup |
+| `enableHealthOverlays` | `boolean` | `false` | Show NHSER, ICB, and LHB boundary overlays at startup |
+| `showLegend` | `boolean` | `true` | Show the collapsible legend control |
+| `legendPosition` | `'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right'` | `'top-right'` | Legend control position inside map container |
+| `legendCollapsed` | `boolean` | `false` | Start with legend content collapsed |
+| `legendTitle` | `string` | `'Map layers'` | Legend header title text |
+| `showLegendLocalAuthority` | `boolean` | `true` | Show/hide local authority legend toggle row |
+| `showLegendNhser` | `boolean` | `true` | Show/hide NHS England regions legend toggle row |
+| `showLegendIcb` | `boolean` | `true` | Show/hide ICB legend toggle row |
+| `showLegendLhb` | `boolean` | `true` | Show/hide local health boards legend toggle row |
 | `mapStyleUrl` | `string` | Carto Positron | MapLibre base style URL |
 | `center` | `[lon, lat]` | UK center | Initial map center |
 | `zoom` | `number` | `5` | Initial zoom level |
@@ -322,7 +342,7 @@ map.setStyle({ tooltip: { areaLabel: 'Local area' } });
 | `setNation(nation)` | Change the nation filter |
 | `setEra(era)` | Change the requested era |
 | `setStyle(style)` | Update visual style at runtime |
-| `setOverlayVisibility({...})` | Show/hide boundary overlays *(Phase 2)* |
+| `setOverlayVisibility({...})` | Show/hide boundary overlays (`localAuthority`, `nhser`, `icb`, `lhb`) |
 | `setPatients(data, options?)` | Set patient scatter data |
 | `clearPatients()` | Remove patient overlay |
 | `setLeadCentre(data, options?)` | Set lead-centre marker |
@@ -331,6 +351,13 @@ map.setStyle({ tooltip: { areaLabel: 'Local area' } });
 | `resize()` | Trigger MapLibre resize (use after container resize) |
 | `fitToData(options?)` | Fit to lead centre and/or patient points. Uses bounds with default 50px padding for multi-point data; single-point fallback uses zoom 6 unless overridden. |
 | `destroy()` | Remove all layers, sources, listeners, and map instance |
+
+Legend notes:
+
+- The legend is collapsible and includes clickable rows to toggle overlays.
+- A compact key is shown below toggles with boundary line swatches and an IMD decile color ramp.
+- Rows can be hidden per overlay type using `showLegendLocalAuthority`, `showLegendNhser`, `showLegendIcb`, and `showLegendLhb`.
+- Nation-specific rows stay visible but are disabled when not applicable (for example, `England only` or `Wales only`).
 
 ---
 

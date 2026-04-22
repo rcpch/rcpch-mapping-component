@@ -8,6 +8,18 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### New
+
+- Local authority and health boundary overlays (NHSER, ICB, LHB) via `setOverlayVisibility` and startup flags.
+- Patient group color mapping support via `style.patients.colorByGroup`.
+- Collapsible corner legend with clickable overlay toggles and per-row visibility controls.
+- MIT `LICENSE` file.
+- GitHub Actions CI workflow running `npm test` and `npm run build` on push/PR.
+
+### Updated
+
+- `fitToData` now fits to all plotted points (patients + lead centre), with optional padding for multi-point bounds.
+
 ## [0.1.0] — 2026-04-20
 
 ### Added

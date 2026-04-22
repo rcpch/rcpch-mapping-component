@@ -155,7 +155,7 @@ export const DEFAULT_STYLE: Required<MapStyleOptions> = {
     localAuthorityWidth: 1,
     nhserColor: RCPCH_PINK,
     nhserWidth: 1.5,
-    icbColor: RCPCH_LIGHT_BLUE,
+    icbColor: RCPCH_CHARCOAL,
     icbWidth: 1,
     lhbColor: RCPCH_LIGHT_BLUE,
     lhbWidth: 1,
@@ -187,6 +187,18 @@ export const DEFAULT_STYLE: Required<MapStyleOptions> = {
     patientTooltipText: '{{patientLabel}}',
     leadCentreTooltipText: '{{leadCentreLabel}}: {{label}}',
   },
+  legend: {
+    backgroundColor: '#ffffff',
+    textColor: RCPCH_DARK_BLUE,
+    borderColor: '#d8dde6',
+    borderRadius: 8,
+    fontSize: 13,
+    fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+    width: 220,
+    boxShadow: '0 6px 18px rgba(0, 0, 0, 0.12)',
+    toggleOnColor: RCPCH_DARK_BLUE,
+    toggleOffColor: '#6b7280',
+  },
 };
 
 // ── Style helpers ─────────────────────────────────────────────────────────────
@@ -203,6 +215,7 @@ export function mergeStyle(
     patients: { ...defaults.patients, ...overrides.patients },
     leadCentre: { ...defaults.leadCentre, ...overrides.leadCentre },
     tooltip: { ...defaults.tooltip, ...overrides.tooltip },
+    legend: { ...defaults.legend, ...overrides.legend },
   };
 }
 
