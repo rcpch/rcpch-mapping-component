@@ -210,7 +210,7 @@ export interface ImdMapInstance {
   clearLeadCentre(): void;
   getState(): ImdMapState;
   resize(): void;
-  /** Center map on lead centre and zoom to specified level. Default zoom is 6. */
-  fitToData(options?: { zoom?: number }): void;
+  /** Fit map to plotted patients and/or lead centre. Uses bounds + optional padding. */
+  fitToData(options?: { zoom?: number; padding?: number }): void;
   destroy(): void;
 }

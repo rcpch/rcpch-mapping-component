@@ -88,7 +88,7 @@ Old casing variants and legacy names (`LSOA11CD`, `lsoa_name`, etc.) are support
 
 ### Patient validation
 
-Out-of-bounds points are always skipped (never plotted). In non-strict mode a warning is emitted via `onWarning`. The `strict` parameter has been removed from the public API.
+Out-of-bounds points are always skipped (never plotted). In default mode, invalid records are skipped and emitted via `onWarning`. Optional strict mode is supported via `setPatients(data, { strict: true })` to throw on first invalid record.
 
 ---
 

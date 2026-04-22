@@ -7,6 +7,10 @@ export interface NormalizeResult {
   warnings: Array<{ code: string; message: string; details?: unknown }>;
 }
 
+interface NormalizeOptions {
+  strict?: boolean;
+}
+
 function isGeoJsonFeatureCollection(data: unknown): data is FeatureCollection<Point> {
   return (
     typeof data === 'object' &&
@@ -34,9 +38,11 @@ function isGeoJsonFeature(data: unknown): data is Feature<Point> {
  */
 export function normalizePatientInput(
   data: PatientInput,
+  options?: NormalizeOptions,
 ): NormalizeResult {
   const features: FeatureCollection<Point>['features'] = [];
   const warnings: NormalizeResult['warnings'] = [];
+  const strict = options?.strict === true;
 
   let records: PatientRecord[];
 
@@ -55,6 +61,9 @@ export function normalizePatientInput(
         : (item as PatientRecord),
     );
   } else {
+    if (strict) {
+      throw new Error('[rcpch-imd-map] PatientInput must be an array or GeoJSON FeatureCollection.');
+    }
     warnings.push({ code: 'INVALID_INPUT', message: 'PatientInput must be an array or GeoJSON FeatureCollection.' });
     return { features, warnings };
   }
@@ -63,6 +72,11 @@ export function normalizePatientInput(
     const { point, errors } = validatePatientPoint(records[i]);
 
     if (!point) {
+      if (strict) {
+        throw new Error(
+          `[rcpch-imd-map] Patient record at index ${i} is invalid: ${errors.join('; ')}`,
+        );
+      }
       warnings.push({
         code: 'INVALID_PATIENT_POINT',
         message: `Patient record at index ${i} is invalid and will be skipped: ${errors.join('; ')}`,

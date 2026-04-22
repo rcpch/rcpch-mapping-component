@@ -99,12 +99,57 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   let mapLoaded = false;
   let pendingPatientFeatures: Feature<Point>[] | null = null;
   let pendingLeadCentreFeature: Feature<Point> | null = null;
-  let pendingFitToData: { zoom: number } | null = null;
+  let pendingFitToData: { zoom?: number; padding?: number } | null = null;
   let patientInteractionAttached = false;
   let leadCentreInteractionAttached = false;
 
   // ── Stored lead centre coordinate for fitToData() ───────────────────────────
   let storedLeadCentreCoord: [number, number] | null = null;
+  let storedPatientCoords: [number, number][] = [];
+
+  function getFitCoords(): [number, number][] {
+    return [
+      ...(storedLeadCentreCoord ? [storedLeadCentreCoord] : []),
+      ...storedPatientCoords,
+    ];
+  }
+
+  function applyFitToData(zoom?: number, padding?: number): void {
+    const coords = getFitCoords();
+    if (!coords.length) {
+      logger.warn('No patient or lead centre data to fit to.');
+      return;
+    }
+
+    if (coords.length === 1) {
+      const [lon, lat] = coords[0];
+      map.flyTo({ center: [lon, lat], zoom: zoom ?? 6 });
+      return;
+    }
+
+    let minLon = coords[0][0];
+    let minLat = coords[0][1];
+    let maxLon = coords[0][0];
+    let maxLat = coords[0][1];
+
+    for (const [lon, lat] of coords) {
+      if (lon < minLon) minLon = lon;
+      if (lat < minLat) minLat = lat;
+      if (lon > maxLon) maxLon = lon;
+      if (lat > maxLat) maxLat = lat;
+    }
+
+    map.fitBounds(
+      [
+        [minLon, minLat],
+        [maxLon, maxLat],
+      ],
+      {
+        padding: padding ?? 50,
+        maxZoom: zoom,
+      },
+    );
+  }
 
   logger.debug(`tilesBaseUrl resolved to: "${tilesBaseUrl}"`);
 
@@ -120,6 +165,8 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     attachChoroplethInteraction(map, popup, resolvedStyle, options);
 
     if (pendingPatientFeatures) {
+      storedPatientCoords = pendingPatientFeatures
+        .map((f) => f.geometry.coordinates as [number, number]);
       addOrUpdatePatientsSource(map, pendingPatientFeatures);
       addOrUpdatePatientsLayer(map, resolvedStyle);
       if (!patientInteractionAttached) {
@@ -143,16 +190,11 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     }
 
     if (pendingFitToData) {
-      const zoom = pendingFitToData.zoom;
-      if (storedLeadCentreCoord) {
-        const [lon, lat] = storedLeadCentreCoord;
-        // Defer flyTo until after first idle to avoid interrupting layer rendering
-        map.once('idle', () => {
-          map.flyTo({ center: [lon, lat], zoom });
-        });
-      } else {
-        logger.warn('No lead centre data to fit to.');
-      }
+      const { zoom, padding } = pendingFitToData;
+      // Defer camera movement until after first idle to avoid interrupting layer rendering.
+      map.once('idle', () => {
+        applyFitToData(zoom, padding);
+      });
       pendingFitToData = null;
     }
   });
@@ -210,6 +252,12 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       resolvedStyle = mergeStyle(DEFAULT_STYLE, newStyle);
       if (mapLoaded) {
         updateChoroplethStyle(map, state.nation, resolvedStyle);
+        if (state.hasPatients) {
+          addOrUpdatePatientsLayer(map, resolvedStyle);
+        }
+        if (state.hasLeadCentre) {
+          addOrUpdateLeadCentreLayer(map, resolvedStyle);
+        }
       }
     },
 
@@ -219,8 +267,14 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       logger.debug('setOverlayVisibility: boundary overlay layers will be implemented in Phase 2.');
     },
 
-    setPatients(data: PatientInput, _patientOptions?: PatientLayerOptions) {
-      const { features, warnings } = normalizePatientInput(data);
+    setPatients(data: PatientInput, patientOptions?: PatientLayerOptions) {
+      const { features, warnings } = normalizePatientInput(data, {
+        strict: patientOptions?.strict,
+      });
+
+      storedPatientCoords = features.map(
+        (f) => f.geometry.coordinates as [number, number],
+      );
 
       for (const w of warnings) {
         logger.warn(w.message);
@@ -243,6 +297,7 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
 
     clearPatients() {
       pendingPatientFeatures = null;
+      storedPatientCoords = [];
       if (!mapLoaded) return;
       removePatientsLayer(map);
       if (map.getSource(PATIENTS_SOURCE_ID)) map.removeSource(PATIENTS_SOURCE_ID);
@@ -290,21 +345,16 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       map.resize();
     },
 
-    fitToData(fitOptions?: { zoom?: number }) {
-      const zoom = fitOptions?.zoom ?? 6;
+    fitToData(fitOptions?: { zoom?: number; padding?: number }) {
+      const zoom = fitOptions?.zoom;
+      const padding = fitOptions?.padding;
 
       if (!mapLoaded) {
-        pendingFitToData = { zoom };
+        pendingFitToData = { zoom, padding };
         return;
       }
 
-      if (!storedLeadCentreCoord) {
-        logger.warn('No lead centre data to fit to.');
-        return;
-      }
-
-      const [lon, lat] = storedLeadCentreCoord;
-      map.flyTo({ center: [lon, lat], zoom });
+      applyFitToData(zoom, padding);
     },
 
     destroy() {

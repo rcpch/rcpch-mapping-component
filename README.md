@@ -304,7 +304,7 @@ map.setStyle({ tooltip: { areaLabel: 'Local area' } });
 | `container` | `string \| HTMLElement` | — | DOM element ID or element reference |
 | `tilesBaseUrl` | `string` | — | Base URL of the tile server |
 | `initialNation` | `Nation` | `'all'` | Starting nation filter |
-| `initialEra` | `Era` | `'2011'` | Requested era (may be overridden) |
+| `initialEra` | `Era` | `'2021'` | Requested era (may be overridden) |
 | `mapStyleUrl` | `string` | Carto Positron | MapLibre base style URL |
 | `center` | `[lon, lat]` | UK center | Initial map center |
 | `zoom` | `number` | `5` | Initial zoom level |
@@ -329,7 +329,7 @@ map.setStyle({ tooltip: { areaLabel: 'Local area' } });
 | `clearLeadCentre()` | Remove lead-centre marker |
 | `getState()` | Return current map state snapshot |
 | `resize()` | Trigger MapLibre resize (use after container resize) |
-| `fitToData(options?)` | Center map on lead centre and zoom to specified level (default zoom 6) |
+| `fitToData(options?)` | Fit to lead centre and/or patient points. Uses bounds with default 50px padding for multi-point data; single-point fallback uses zoom 6 unless overridden. |
 | `destroy()` | Remove all layers, sources, listeners, and map instance |
 
 ---

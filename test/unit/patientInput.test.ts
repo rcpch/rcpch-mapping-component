@@ -66,4 +66,20 @@ describe('normalizePatientInput — invalid input', () => {
     expect(features).toHaveLength(0);
     expect(warnings[0].code).toBe('INVALID_INPUT');
   });
+
+  it('throws on invalid input in strict mode', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(() => normalizePatientInput('not valid' as any, { strict: true })).toThrow();
+  });
+
+  it('throws on first invalid patient record in strict mode', () => {
+    const mixed: PatientRecord[] = [
+      { id: 'good', lat: 51.5, lon: -0.1 },
+      { id: 'bad' },
+    ];
+
+    expect(() => normalizePatientInput(mixed, { strict: true })).toThrow(
+      /Patient record at index 1 is invalid/,
+    );
+  });
 });
