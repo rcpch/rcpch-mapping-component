@@ -4,6 +4,12 @@ A browser-first UK deprivation map library. Renders IMD choropleth tiles using [
 
 Authored in TypeScript. Consuming applications only need plain JavaScript.
 
+Maintainers and coding agents: see `AGENTS.md` for project structure, test locations, tile contracts, and release workflow.
+
+Upstream tile/data source: [`rcpch/rcpch-census-platform`](https://github.com/rcpch/rcpch-census-platform)
+
+Live demo: [rcpch.github.io/rcpch-census-platform/](https://rcpch.github.io/rcpch-census-platform/)
+
 ---
 
 ## What problem does this solve?
