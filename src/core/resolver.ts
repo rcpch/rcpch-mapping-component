@@ -49,23 +49,25 @@ export function willEraBeOverridden(nation: Nation, requestedEra: Era): boolean 
 
 // ── Zoom tier resolution ──────────────────────────────────────────────────────
 //
-// The census platform materializes three tile tables per era, each pre-built for
+// The census platform materializes four tile tables per era, each pre-built for
 // a zoom range with appropriate geometry simplification.
 //
-//   z0_4  → zoom 0–4   (whole UK fits on screen)
-//   z5_7  → zoom 5–7   (region/county level)
-//   z8_10 → zoom 8–10  (individual area level)
+//   z0_4   → zoom 0–4   (whole UK fits on screen)
+//   z5_7   → zoom 5–7   (region/county level)
+//   z8_10  → zoom 8–10  (individual area level)
+//   z11_14 → zoom 11–14 (detailed area level)
 //
-// In MapLibre GL, all three sources are added simultaneously. Each corresponding
+// In MapLibre GL, all sources are added simultaneously. Each corresponding
 // fill layer is given a minzoom / maxzoom so MapLibre switches them automatically
 // as the user zooms. Only the correct tier is rendered at any given zoom level.
 
-export type ZoomTier = 'z0_4' | 'z5_7' | 'z8_10';
+export type ZoomTier = 'z0_4' | 'z5_7' | 'z8_10' | 'z11_14';
 
 export const ZOOM_TIERS: { tier: ZoomTier; minzoom: number; maxzoom: number }[] = [
   { tier: 'z0_4',  minzoom: 0, maxzoom: 5 },
   { tier: 'z5_7',  minzoom: 5, maxzoom: 8 },
-  { tier: 'z8_10', minzoom: 8, maxzoom: 24 },
+  { tier: 'z8_10', minzoom: 8, maxzoom: 11 },
+  { tier: 'z11_14', minzoom: 11, maxzoom: 24 },
 ];
 
 // ── Table name resolution ─────────────────────────────────────────────────────

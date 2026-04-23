@@ -75,12 +75,22 @@ describe('resolveTileTableName', () => {
   it('returns uk_master_2021_z8_10 for 2021 era, high zoom tier', () => {
     expect(resolveTileTableName('2021', 'z8_10')).toBe('uk_master_2021_z8_10');
   });
+
+  it('returns uk_master_2011_z11_14 for 2011 era, detail zoom tier', () => {
+    expect(resolveTileTableName('2011', 'z11_14')).toBe('uk_master_2011_z11_14');
+  });
+
+  it('returns uk_master_2021_z11_14 for 2021 era, detail zoom tier', () => {
+    expect(resolveTileTableName('2021', 'z11_14')).toBe('uk_master_2021_z11_14');
+  });
 });
 
 describe('resolveFullTableName', () => {
   it('includes the public schema prefix', () => {
     expect(resolveFullTableName('2011', 'z0_4')).toBe('public.uk_master_2011_z0_4');
     expect(resolveFullTableName('2021', 'z8_10')).toBe('public.uk_master_2021_z8_10');
+    expect(resolveFullTableName('2011', 'z11_14')).toBe('public.uk_master_2011_z11_14');
+    expect(resolveFullTableName('2021', 'z11_14')).toBe('public.uk_master_2021_z11_14');
   });
 });
 

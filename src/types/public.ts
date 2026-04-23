@@ -68,6 +68,11 @@ export interface TooltipStyleOptions {
   /** Label used in lead-centre hover tooltip. Default: "Lead centre". */
   leadCentreLabel?: string;
   /**
+   * Area tooltip content template.
+   * Supports token interpolation, e.g. "{{areaName}}", "{{imdDecile}}", "{{nation}}".
+   */
+  areaTooltipText?: string;
+  /**
    * Patient tooltip content template.
    * Supports token interpolation, e.g. "{{patientLabel}}" or "{{id}}".
    */
@@ -123,10 +128,26 @@ export interface ImdMapState {
 // ── Event payloads ────────────────────────────────────────────────────────────
 
 export interface AreaHoverPayload {
+  areaCode: string | undefined;
+  areaName: string | undefined;
+  areaType: string | undefined;
+  nation: string | undefined;
+  imdDecile: number | undefined;
+  imdYear: number | undefined;
+  boundaryYear: number | undefined;
+  laCode: string | undefined;
+  laName: string | undefined;
+  laYear: number | undefined;
+  nhserCode: string | undefined;
+  nhserName: string | undefined;
+  icbCode: string | undefined;
+  icbName: string | undefined;
+  lhbCode: string | undefined;
+  lhbName: string | undefined;
+  lngLat: { lng: number; lat: number };
+  // Backward-compatible aliases retained for existing consumers.
   lsoaCode: string | undefined;
   lsoaName: string | undefined;
-  imdDecile: number | undefined;
-  nation: string | undefined;
   rawProperties: Record<string, unknown>;
 }
 
@@ -211,6 +232,13 @@ export interface CreateImdMapOptions {
   center?: [number, number];
   zoom?: number;
   style?: MapStyleOptions;
+  /**
+   * Area tooltip rendering mode.
+   * - default: built-in tooltip content
+   * - template: uses style.tooltip.areaTooltipText token interpolation
+   * - none: disables built-in area popup (callbacks still fire)
+   */
+  areaTooltipMode?: 'default' | 'template' | 'none';
   onViewChange?: (view: { nation: Nation; era: Era; effectiveEra: Era }) => void;
   onAreaHover?: (payload: AreaHoverPayload) => void;
   onAreaClick?: (payload: AreaClickPayload) => void;

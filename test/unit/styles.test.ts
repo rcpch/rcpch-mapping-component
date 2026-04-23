@@ -23,6 +23,12 @@ function colorDistance(a: string, b: string): number {
 }
 
 describe('styles', () => {
+  it('includes a default area tooltip template', () => {
+    expect(DEFAULT_STYLE.tooltip.areaTooltipText).toContain('{{areaName}}');
+    expect(DEFAULT_STYLE.tooltip.areaTooltipText).toContain('{{imdDecile}}');
+    expect(DEFAULT_STYLE.tooltip.areaTooltipText).toContain('{{nation}}');
+  });
+
   it('generates a 10-step ramp from a base color', () => {
     const ramp = generateDecileRampFromBaseColor('#d7191c');
     expect(ramp).toHaveLength(10);

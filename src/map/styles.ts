@@ -184,6 +184,12 @@ export const DEFAULT_STYLE: Required<MapStyleOptions> = {
     nationLabel: 'Nation',
     patientLabel: 'Patient',
     leadCentreLabel: 'Lead centre',
+    areaTooltipText:
+      '<strong style="display:block;margin-bottom:2px;">{{areaName}}</strong>' +
+      '<span>LSOA year: {{boundaryYear}}</span><br/>' +
+      '<span>{{decileLabel}}: <strong>{{imdDecile}}</strong></span><br/>' +
+      '<span>IMD year: {{imdYear}}</span><br/>' +
+      '<span>{{nationLabel}}: {{nation}}</span>',
     patientTooltipText: '{{patientLabel}}',
     leadCentreTooltipText: '{{leadCentreLabel}}: {{label}}',
   },
