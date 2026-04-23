@@ -271,6 +271,10 @@ createImdMap({
       nationLabel: 'Nation',
       patientLabel: 'Patient',
       leadCentreLabel: 'Lead centre',
+      areaTooltipText:
+        '<strong>{{areaName}}</strong><br/>' +
+        '<span>{{decileLabel}}: {{imdDecile}}</span><br/>' +
+        '<span>{{nationLabel}}: {{nation}}</span>',
       patientTooltipText: '{{patientLabel}}',
       leadCentreTooltipText: '{{leadCentreLabel}}: {{label}}',
     },
@@ -280,7 +284,7 @@ createImdMap({
 
 ### Tooltip templates
 
-`patientTooltipText` and `leadCentreTooltipText` support `{{token}}` interpolation.
+`areaTooltipText`, `patientTooltipText`, and `leadCentreTooltipText` support `{{token}}` interpolation.
 
 If you are writing inline JavaScript inside a Django template, Django will try to
 evaluate `{{...}}` first. Use one of these patterns so the map library still
@@ -321,6 +325,29 @@ patientTooltipText: 'Group: {{group}}'
 | `{{leadCentreLabel}}` | The `leadCentreLabel` style option (default `"Lead centre"`) |
 | `{{label}}` | The `label` field from `setLeadCentre({ label, lat, lon })` |
 
+**Area tokens** (`areaTooltipText`):
+
+| Token | Value |
+|---|---|
+| `{{areaCode}}` | Area code from tile `code` |
+| `{{areaName}}` | Area name from tile `area_name` |
+| `{{areaType}}` | Area type from tile `area_type` (fallback `LSOA`) |
+| `{{nation}}` | Nation from tile `nation` |
+| `{{imdDecile}}` | IMD decile from tile `imd_decile` |
+| `{{imdYear}}` | IMD publication year from tile `imd_year` |
+| `{{boundaryYear}}` | Boundary year from tile `year` |
+| `{{laCode}}` | Local authority code from tile `la_code` |
+| `{{laName}}` | Local authority name from tile `la_name` |
+| `{{laYear}}` | Local authority year from tile `la_year` |
+| `{{nhserCode}}` | NHS England region code from tile `nhser_code` |
+| `{{nhserName}}` | NHS England region name from tile `nhser_name` |
+| `{{icbCode}}` | ICB code from tile `icb_code` |
+| `{{icbName}}` | ICB name from tile `icb_name` |
+| `{{lhbCode}}` | Local health board code from tile `lhb_code` |
+| `{{lhbName}}` | Local health board name from tile `lhb_name` |
+| `{{decileLabel}}` | The `decileLabel` style option |
+| `{{nationLabel}}` | The `nationLabel` style option |
+
 Style can also be updated at runtime:
 
 ```js
@@ -353,10 +380,33 @@ map.setStyle({ tooltip: { areaLabel: 'Local area' } });
 | `center` | `[lon, lat]` | UK center | Initial map center |
 | `zoom` | `number` | `5` | Initial zoom level |
 | `style` | `MapStyleOptions` | RCPCH defaults | Visual style overrides |
+| `areaTooltipMode` | `'default' \| 'template' \| 'none'` | `'default'` | Built-in area tooltip, template tooltip, or no built-in area popup |
 | `onViewChange` | `function` | — | Called when nation or era changes |
-| `onAreaHover` | `function` | — | Called on choropleth feature hover |
+| `onAreaHover` | `function` | — | Called on choropleth feature hover (includes pointer `lngLat`) |
 | `onAreaClick` | `function` | — | Called on choropleth feature click |
 | `onWarning` | `function` | — | Called for non-fatal issues |
+
+### Area tooltip mode
+
+```js
+createImdMap({
+  container: 'map',
+  tilesBaseUrl: '...',
+  areaTooltipMode: 'template',
+  style: {
+    tooltip: {
+      areaTooltipText:
+        '<strong>{{areaName}}</strong><br/>' +
+        '<span>{{decileLabel}}: {{imdDecile}}</span><br/>' +
+        '<span>{{nationLabel}}: {{nation}}</span>',
+    },
+  },
+});
+```
+
+- `default`: current built-in area tooltip rows.
+- `template`: render `style.tooltip.areaTooltipText` with token interpolation.
+- `none`: no built-in area popup; `onAreaHover`/`onAreaClick` still fire for fully external tooltips.
 
 ### Instance methods
 

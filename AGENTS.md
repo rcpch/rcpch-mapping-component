@@ -86,16 +86,18 @@ Build config lives in `tsup.config.ts`:
 
 ### Choropleth tables
 
-Three UK mixed-nation tile tables exist per era, one per zoom tier:
+Four UK mixed-nation tile tables exist per era, one per zoom tier:
 
 | Era | Tier | Full table | Source-layer name |
 | --- | --- | --- | --- |
 | `2011` | `z0_4` | `public.uk_master_2011_z0_4` | `uk_master_2011_z0_4` |
 | `2011` | `z5_7` | `public.uk_master_2011_z5_7` | `uk_master_2011_z5_7` |
 | `2011` | `z8_10` | `public.uk_master_2011_z8_10` | `uk_master_2011_z8_10` |
+| `2011` | `z11_14` | `public.uk_master_2011_z11_14` | `uk_master_2011_z11_14` |
 | `2021` | `z0_4` | `public.uk_master_2021_z0_4` | `uk_master_2021_z0_4` |
 | `2021` | `z5_7` | `public.uk_master_2021_z5_7` | `uk_master_2021_z5_7` |
 | `2021` | `z8_10` | `public.uk_master_2021_z8_10` | `uk_master_2021_z8_10` |
+| `2021` | `z11_14` | `public.uk_master_2021_z11_14` | `uk_master_2021_z11_14` |
 
 Tile URL format:
 
@@ -123,9 +125,10 @@ The era resolution rules are implemented in `src/core/resolver.ts` and should re
 
 - `z0_4` renders at zoom `0-5`
 - `z5_7` renders at zoom `5-8`
-- `z8_10` renders at zoom `8-24`
+- `z8_10` renders at zoom `8-11`
+- `z11_14` renders at zoom `11-24`
 
-All three sources are added together; layer `minzoom`/`maxzoom` control switching.
+All four sources are added together; layer `minzoom`/`maxzoom` control switching.
 
 ### Overlay views
 

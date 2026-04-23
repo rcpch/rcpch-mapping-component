@@ -9,15 +9,48 @@
     body { font-family: sans-serif; background: #f5f5f5; }
     header { background: #0d0d58; color: #fff; padding: 1rem 1.5rem; }
     header h1 { font-size: 1.1rem; font-weight: 600; }
-    #map { width: 100%; height: calc(100vh - 3.5rem); }
+    header p { font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.9; }
+    .container { display: flex; height: calc(100vh - 4.5rem); gap: 1rem; padding: 1rem; }
+    .map-container { flex: 1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .controls { width: 280px; background: #fff; border-radius: 8px; padding: 1rem; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .controls h2 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem; color: #0d0d58; }
+    .mode-selector { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .mode-btn { padding: 0.5rem 0.75rem; border: 1px solid #d8dde6; background: #fff; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+    .mode-btn.active { background: #0d0d58; color: #fff; border-color: #0d0d58; }
+    .info-panel { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 0.75rem; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1rem; }
+    .info-label { font-weight: 600; color: #0d0d58; }
+    .info-value { color: #374151; word-break: break-all; }
+    @media (max-width: 1200px) {
+      .container { flex-direction: column; }
+      .controls { width: 100%; height: 200px; }
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>UK IMD Choropleth — standalone example (UMD bundle)</h1>
+    <p>Demonstrates default, template, and external tooltip modes. Set <code>window.RCPCH_DEPRIVATION_TILES_URL</code> before loading.</p>
   </header>
 
-  <div id="map"></div>
+  <div class="container">
+    <div id="map" class="map-container"></div>
+    <div class="controls">
+      <h2>Area tooltip mode</h2>
+      <div class="mode-selector">
+        <button class="mode-btn active" data-mode="default">Default</button>
+        <button class="mode-btn" data-mode="template">Template</button>
+        <button class="mode-btn" data-mode="none">None (external)</button>
+      </div>
+      <div class="info-panel">
+        <div class="info-label">Current mode:</div>
+        <div class="info-value" id="mode-display">default</div>
+      </div>
+      <div class="info-panel" id="hover-info" style="display: none;">
+        <div class="info-label">Hover info:</div>
+        <div class="info-value" id="hover-content"></div>
+      </div>
+    </div>
+  </div>
 
   <!--
     The self-contained IIFE bundle includes MapLibre GL and MapLibre CSS.
@@ -33,37 +66,108 @@
      *   window.RCPCH_DEPRIVATION_TILES_URL = 'http://localhost:7800';
      */
     const tilesBaseUrl = window.RCPCH_DEPRIVATION_TILES_URL || '';
+    let currentMode = 'default';
+    let mapInstance = null;
 
-    const map = RcpchImdMap.createImdMap({
-      container: 'map',
-      tilesBaseUrl: tilesBaseUrl,
-      initialNation: 'all',
-      initialEra: '2021',
+    function createMapWithMode(mode) {
+      // Destroy existing map if any
+      if (mapInstance) {
+        mapInstance.destroy();
+        mapInstance = null;
+      }
 
-      style: {
-        choropleth: {
-          fillOpacity: 0.75,
-          borderColor: '#ffffff',
-          borderWidth: 0.5,
+      // Base options shared across all modes
+      const baseOptions = {
+        container: 'map',
+        tilesBaseUrl: tilesBaseUrl,
+        initialNation: 'all',
+        initialEra: '2021',
+        style: {
+          choropleth: {
+            fillOpacity: 0.75,
+            borderColor: '#ffffff',
+            borderWidth: 0.5,
+          },
+          tooltip: {
+            backgroundColor: '#0d0d58',
+            textColor: '#ffffff',
+            areaLabel: 'Area',
+            decileLabel: 'IMD decile',
+          },
         },
-        tooltip: {
-          backgroundColor: '#0d0d58',
-          textColor: '#ffffff',
-          areaLabel: 'Area',
-          decileLabel: 'IMD decile',
+        onViewChange: function (view) {
+          console.log('[demo] view changed', view);
         },
-      },
+        onWarning: function (warning) {
+          console.warn('[demo] warning', warning.code, warning.message);
+        },
+      };
 
-      onViewChange: function (view) {
-        console.log('[demo] view changed', view);
-      },
-      onWarning: function (warning) {
-        console.warn('[demo] warning', warning.code, warning.message);
-      },
+      // Mode-specific configuration
+      if (mode === 'template') {
+        // Template mode: use areaTooltipText with token interpolation
+        baseOptions.areaTooltipMode = 'template';
+        baseOptions.style.tooltip.areaTooltipText =
+          '<strong>{{areaName}}</strong><br/>' +
+          '<span><small>{{areaCode}}</small></span><br/>' +
+          '<span>{{decileLabel}}: <strong>{{imdDecile}}</strong></span><br/>' +
+          '<span>{{nationLabel}}: {{nation}}</span><br/>' +
+          '<span><small>{{boundaryYear}} boundaries</small></span>';
+      } else if (mode === 'none') {
+        // External mode: disable built-in popup, handle via callbacks
+        baseOptions.areaTooltipMode = 'none';
+      }
+
+      // Add hover callback to display custom info when in external mode
+      if (mode === 'none') {
+        baseOptions.onAreaHover = function (payload) {
+          const info = document.getElementById('hover-info');
+          const content = document.getElementById('hover-content');
+          const parts = [
+            '<strong>' + (payload.areaName || 'Unknown') + '</strong>',
+            'Code: ' + (payload.areaCode || '—'),
+            'Decile: ' + (payload.imdDecile !== undefined ? payload.imdDecile : '—'),
+            'Nation: ' + (payload.nation || '—'),
+            'Pointer: ' + payload.lngLat.lng.toFixed(4) + ', ' + payload.lngLat.lat.toFixed(4),
+          ];
+          content.innerHTML = parts.join('<br/>');
+          info.style.display = 'block';
+        };
+      }
+
+      mapInstance = RcpchImdMap.createImdMap(baseOptions);
+
+      // Add sample patient and lead centre data
+      mapInstance.setPatients([
+        { id: 'p1', lat: 51.5074, lon: -0.1278, group: 'Group A' },
+        { id: 'p2', lat: 53.4808, lon: -2.2426, group: 'Group B' },
+        { id: 'p3', lat: 55.9533, lon: -3.1883, group: 'Group A' },
+      ]);
+
+      mapInstance.setLeadCentre({
+        lat: 51.5202,
+        lon: -0.1049,
+        label: 'Lead Centre',
+      });
+
+      // Expose for console debugging
+      window._map = mapInstance;
+    }
+
+    // Initialize with default mode
+    createMapWithMode('default');
+
+    // Mode selector buttons
+    document.querySelectorAll('.mode-btn').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const mode = this.getAttribute('data-mode');
+        document.querySelectorAll('.mode-btn').forEach((b) => b.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('mode-display').textContent = mode;
+        document.getElementById('hover-info').style.display = mode === 'none' ? 'block' : 'none';
+        createMapWithMode(mode);
+      });
     });
-
-    // Expose the instance for debugging in the browser console
-    window._map = map;
   </script>
 </body>
 </html>
