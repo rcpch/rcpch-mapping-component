@@ -102,10 +102,10 @@ describe('overlay tiered sources and layers', () => {
 		]);
 
 		expect(map.addLayerCalls.map((l) => l['source-layer'])).toEqual([
-			'la_tiles_z0_4',
-			'la_tiles_z5_7',
-			'la_tiles_z8_10',
-			'la_tiles_z11_14',
+			'public.la_tiles_z0_4',
+			'public.la_tiles_z5_7',
+			'public.la_tiles_z8_10',
+			'public.la_tiles_z11_14',
 		]);
 	});
 
@@ -136,6 +136,12 @@ describe('overlay tiered sources and layers', () => {
 		]);
 		expect(seeded[3].setTiles).toHaveBeenCalledWith([
 			'https://tiles.example.com/public.nhser_tiles_2021_z11_14/{z}/{x}/{y}.pbf',
+		]);
+		expect(map.addLayerCalls.map((l) => l['source-layer'])).toEqual([
+			'public.nhser_tiles_2021_z0_4',
+			'public.nhser_tiles_2021_z5_7',
+			'public.nhser_tiles_2021_z8_10',
+			'public.nhser_tiles_2021_z11_14',
 		]);
 	});
 

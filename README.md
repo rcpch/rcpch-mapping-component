@@ -201,6 +201,17 @@ Tile URL resolution precedence:
 
 The library source contains **no hardcoded tile URLs**.
 
+### Overlay boundary tile contract
+
+Boundary overlays (local authority, NHSER, ICB, LHB) are requested from schema-qualified table ids and rendered with the same schema-qualified `source-layer` name. Example:
+
+- URL table id: `public.la_tiles_z5_7`
+- `source-layer`: `public.la_tiles_z5_7`
+
+If you self-host boundary tiles, ensure each overlay PBF exposes the exact same layer name string as the table id used in the URL path.
+
+Bring your own overlay configuration (custom overlay table/layer names via library options) could be enabled in a future release. If you need this, please open a GitHub issue so contributors can prioritise and scope it.
+
 ---
 
 ## Nation and era rules

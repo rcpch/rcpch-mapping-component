@@ -2,6 +2,7 @@ import { VectorTileSource } from 'maplibre-gl';
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type { MapStyleOptions } from '../types/public';
 import { buildTileUrl, ZOOM_TIERS } from '../core/resolver';
+import { buildMvtLayerName } from './mvtLayerName';
 
 export const NHSER_SOURCE_ID = 'rcpch-imd-nhser-overlay';
 export const NHSER_LAYER_ID = 'rcpch-imd-nhser-overlay-line';
@@ -36,8 +37,8 @@ function addOrUpdateBoundaryOverlay(
 	for (const { tier, minzoom, maxzoom } of ZOOM_TIERS) {
 		const sourceId = overlaySourceId(input.sourceId, tier);
 		const layerId = overlayLayerId(input.layerId, tier);
-		const fullTableName = `public.${input.tablePrefix}_${tier}`;
-		const sourceLayer = `${input.tablePrefix}_${tier}`;
+		const fullTableName = buildMvtLayerName(input.tablePrefix, tier);
+		const sourceLayer = fullTableName;
 		const tileUrl = buildTileUrl(tilesBaseUrl, fullTableName);
 		const existing = map.getSource(sourceId);
 
