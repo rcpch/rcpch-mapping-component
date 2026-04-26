@@ -1,7 +1,7 @@
 import { VectorTileSource } from 'maplibre-gl';
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type { MapStyleOptions } from '../types/public';
-import { buildTileUrl } from '../core/resolver';
+import { buildTileUrl, ZOOM_TIERS } from '../core/resolver';
 
 export const NHSER_SOURCE_ID = 'rcpch-imd-nhser-overlay';
 export const NHSER_LAYER_ID = 'rcpch-imd-nhser-overlay-line';
@@ -10,12 +10,17 @@ export const ICB_LAYER_ID = 'rcpch-imd-icb-overlay-line';
 export const LHB_SOURCE_ID = 'rcpch-imd-lhb-overlay';
 export const LHB_LAYER_ID = 'rcpch-imd-lhb-overlay-line';
 
-const NHSER_FULL_TABLE_NAME = 'public.nhser_tiles_2021';
-const NHSER_SOURCE_LAYER = 'public.nhser_tiles_2021';
-const ICB_FULL_TABLE_NAME = 'public.icb_tiles_2023';
-const ICB_SOURCE_LAYER = 'public.icb_tiles_2023';
-const LHB_FULL_TABLE_NAME = 'public.lhb_tiles_2022';
-const LHB_SOURCE_LAYER = 'public.lhb_tiles_2022';
+const NHSER_TABLE_PREFIX = 'nhser_tiles_2021';
+const ICB_TABLE_PREFIX = 'icb_tiles_2023';
+const LHB_TABLE_PREFIX = 'lhb_tiles_2022';
+
+function overlaySourceId(baseSourceId: string, tier: string): string {
+	return `${baseSourceId}-${tier}`;
+}
+
+function overlayLayerId(baseLayerId: string, tier: string): string {
+	return `${baseLayerId}-${tier}`;
+}
 
 function addOrUpdateBoundaryOverlay(
 	map: MaplibreMap,
@@ -23,47 +28,54 @@ function addOrUpdateBoundaryOverlay(
 	input: {
 		sourceId: string;
 		layerId: string;
-		fullTableName: string;
-		sourceLayer: string;
+		tablePrefix: string;
 		lineColor: string;
 		lineWidth: number;
 	},
 ): void {
-	const tileUrl = buildTileUrl(tilesBaseUrl, input.fullTableName);
-	const existing = map.getSource(input.sourceId);
+	for (const { tier, minzoom, maxzoom } of ZOOM_TIERS) {
+		const sourceId = overlaySourceId(input.sourceId, tier);
+		const layerId = overlayLayerId(input.layerId, tier);
+		const fullTableName = `public.${input.tablePrefix}_${tier}`;
+		const sourceLayer = `${input.tablePrefix}_${tier}`;
+		const tileUrl = buildTileUrl(tilesBaseUrl, fullTableName);
+		const existing = map.getSource(sourceId);
 
-	if (existing instanceof VectorTileSource) {
-		existing.setTiles([tileUrl]);
-	} else {
-		if (existing) map.removeSource(input.sourceId);
-		map.addSource(input.sourceId, {
-			type: 'vector',
-			tiles: [tileUrl],
-			minzoom: 0,
-			maxzoom: 14,
+		if (existing instanceof VectorTileSource) {
+			existing.setTiles([tileUrl]);
+		} else {
+			if (existing) map.removeSource(sourceId);
+			map.addSource(sourceId, {
+				type: 'vector',
+				tiles: [tileUrl],
+				minzoom: 0,
+				maxzoom: 14,
+			});
+		}
+
+		if (map.getLayer(layerId)) {
+			map.setPaintProperty(layerId, 'line-color', input.lineColor);
+			map.setPaintProperty(layerId, 'line-width', input.lineWidth);
+			map.setLayoutProperty(layerId, 'visibility', 'visible');
+			continue;
+		}
+
+		map.addLayer({
+			id: layerId,
+			type: 'line',
+			source: sourceId,
+			'source-layer': sourceLayer,
+			minzoom,
+			maxzoom,
+			paint: {
+				'line-color': input.lineColor,
+				'line-width': input.lineWidth,
+			},
+			layout: {
+				visibility: 'visible',
+			},
 		});
 	}
-
-	if (map.getLayer(input.layerId)) {
-		map.setPaintProperty(input.layerId, 'line-color', input.lineColor);
-		map.setPaintProperty(input.layerId, 'line-width', input.lineWidth);
-		map.setLayoutProperty(input.layerId, 'visibility', 'visible');
-		return;
-	}
-
-	map.addLayer({
-		id: input.layerId,
-		type: 'line',
-		source: input.sourceId,
-		'source-layer': input.sourceLayer,
-		paint: {
-			'line-color': input.lineColor,
-			'line-width': input.lineWidth,
-		},
-		layout: {
-			visibility: 'visible',
-		},
-	});
 }
 
 export function addOrUpdateNhserOverlay(
@@ -74,8 +86,7 @@ export function addOrUpdateNhserOverlay(
 	addOrUpdateBoundaryOverlay(map, tilesBaseUrl, {
 		sourceId: NHSER_SOURCE_ID,
 		layerId: NHSER_LAYER_ID,
-		fullTableName: NHSER_FULL_TABLE_NAME,
-		sourceLayer: NHSER_SOURCE_LAYER,
+		tablePrefix: NHSER_TABLE_PREFIX,
 		lineColor: style.boundaries.nhserColor ?? '#e00087',
 		lineWidth: style.boundaries.nhserWidth ?? 1.5,
 	});
@@ -89,8 +100,7 @@ export function addOrUpdateIcbOverlay(
 	addOrUpdateBoundaryOverlay(map, tilesBaseUrl, {
 		sourceId: ICB_SOURCE_ID,
 		layerId: ICB_LAYER_ID,
-		fullTableName: ICB_FULL_TABLE_NAME,
-		sourceLayer: ICB_SOURCE_LAYER,
+		tablePrefix: ICB_TABLE_PREFIX,
 		lineColor: style.boundaries.icbColor ?? '#57c7f2',
 		lineWidth: style.boundaries.icbWidth ?? 1,
 	});
@@ -104,16 +114,18 @@ export function addOrUpdateLhbOverlay(
 	addOrUpdateBoundaryOverlay(map, tilesBaseUrl, {
 		sourceId: LHB_SOURCE_ID,
 		layerId: LHB_LAYER_ID,
-		fullTableName: LHB_FULL_TABLE_NAME,
-		sourceLayer: LHB_SOURCE_LAYER,
+		tablePrefix: LHB_TABLE_PREFIX,
 		lineColor: style.boundaries.lhbColor ?? '#57c7f2',
 		lineWidth: style.boundaries.lhbWidth ?? 1,
 	});
 }
 
 function hideOverlay(map: MaplibreMap, layerId: string): void {
-	if (map.getLayer(layerId)) {
-		map.setLayoutProperty(layerId, 'visibility', 'none');
+	for (const { tier } of ZOOM_TIERS) {
+		const tierLayerId = overlayLayerId(layerId, tier);
+		if (map.getLayer(tierLayerId)) {
+			map.setLayoutProperty(tierLayerId, 'visibility', 'none');
+		}
 	}
 }
 

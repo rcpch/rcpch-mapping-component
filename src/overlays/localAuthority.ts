@@ -1,66 +1,84 @@
 import { VectorTileSource } from 'maplibre-gl';
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type { MapStyleOptions } from '../types/public';
-import { buildTileUrl } from '../core/resolver';
+import { buildTileUrl, ZOOM_TIERS } from '../core/resolver';
 
 export const LOCAL_AUTHORITY_SOURCE_ID = 'rcpch-imd-la-overlay';
 export const LOCAL_AUTHORITY_LAYER_ID = 'rcpch-imd-la-overlay-line';
 
-const LOCAL_AUTHORITY_FULL_TABLE_NAME = 'public.la_tiles';
-const LOCAL_AUTHORITY_SOURCE_LAYER = 'public.la_tiles';
+const LOCAL_AUTHORITY_TABLE_PREFIX = 'la_tiles';
+
+function localAuthoritySourceId(tier: string): string {
+	return `${LOCAL_AUTHORITY_SOURCE_ID}-${tier}`;
+}
+
+function localAuthorityLayerId(tier: string): string {
+	return `${LOCAL_AUTHORITY_LAYER_ID}-${tier}`;
+}
 
 export function addOrUpdateLocalAuthorityOverlay(
 	map: MaplibreMap,
 	tilesBaseUrl: string,
 	style: Required<MapStyleOptions>,
 ): void {
-	const tileUrl = buildTileUrl(tilesBaseUrl, LOCAL_AUTHORITY_FULL_TABLE_NAME);
-	const existing = map.getSource(LOCAL_AUTHORITY_SOURCE_ID);
+	for (const { tier, minzoom, maxzoom } of ZOOM_TIERS) {
+		const sourceId = localAuthoritySourceId(tier);
+		const layerId = localAuthorityLayerId(tier);
+		const fullTableName = `public.${LOCAL_AUTHORITY_TABLE_PREFIX}_${tier}`;
+		const sourceLayer = `${LOCAL_AUTHORITY_TABLE_PREFIX}_${tier}`;
+		const tileUrl = buildTileUrl(tilesBaseUrl, fullTableName);
+		const existing = map.getSource(sourceId);
 
-	if (existing instanceof VectorTileSource) {
-		existing.setTiles([tileUrl]);
-	} else {
-		if (existing) map.removeSource(LOCAL_AUTHORITY_SOURCE_ID);
-		map.addSource(LOCAL_AUTHORITY_SOURCE_ID, {
-			type: 'vector',
-			tiles: [tileUrl],
-			minzoom: 0,
-			maxzoom: 14,
+		if (existing instanceof VectorTileSource) {
+			existing.setTiles([tileUrl]);
+		} else {
+			if (existing) map.removeSource(sourceId);
+			map.addSource(sourceId, {
+				type: 'vector',
+				tiles: [tileUrl],
+				minzoom: 0,
+				maxzoom: 14,
+			});
+		}
+
+		if (map.getLayer(layerId)) {
+			map.setPaintProperty(
+				layerId,
+				'line-color',
+				style.boundaries.localAuthorityColor ?? '#0d0d58',
+			);
+			map.setPaintProperty(
+				layerId,
+				'line-width',
+				style.boundaries.localAuthorityWidth ?? 1,
+			);
+			map.setLayoutProperty(layerId, 'visibility', 'visible');
+			continue;
+		}
+
+		map.addLayer({
+			id: layerId,
+			type: 'line',
+			source: sourceId,
+			'source-layer': sourceLayer,
+			minzoom,
+			maxzoom,
+			paint: {
+				'line-color': style.boundaries.localAuthorityColor ?? '#0d0d58',
+				'line-width': style.boundaries.localAuthorityWidth ?? 1,
+			},
+			layout: {
+				visibility: 'visible',
+			},
 		});
 	}
-
-	if (map.getLayer(LOCAL_AUTHORITY_LAYER_ID)) {
-		map.setPaintProperty(
-			LOCAL_AUTHORITY_LAYER_ID,
-			'line-color',
-			style.boundaries.localAuthorityColor ?? '#0d0d58',
-		);
-		map.setPaintProperty(
-			LOCAL_AUTHORITY_LAYER_ID,
-			'line-width',
-			style.boundaries.localAuthorityWidth ?? 1,
-		);
-		map.setLayoutProperty(LOCAL_AUTHORITY_LAYER_ID, 'visibility', 'visible');
-		return;
-	}
-
-	map.addLayer({
-		id: LOCAL_AUTHORITY_LAYER_ID,
-		type: 'line',
-		source: LOCAL_AUTHORITY_SOURCE_ID,
-		'source-layer': LOCAL_AUTHORITY_SOURCE_LAYER,
-		paint: {
-			'line-color': style.boundaries.localAuthorityColor ?? '#0d0d58',
-			'line-width': style.boundaries.localAuthorityWidth ?? 1,
-		},
-		layout: {
-			visibility: 'visible',
-		},
-	});
 }
 
 export function hideLocalAuthorityOverlay(map: MaplibreMap): void {
-	if (map.getLayer(LOCAL_AUTHORITY_LAYER_ID)) {
-		map.setLayoutProperty(LOCAL_AUTHORITY_LAYER_ID, 'visibility', 'none');
+	for (const { tier } of ZOOM_TIERS) {
+		const layerId = localAuthorityLayerId(tier);
+		if (map.getLayer(layerId)) {
+			map.setLayoutProperty(layerId, 'visibility', 'none');
+		}
 	}
 }

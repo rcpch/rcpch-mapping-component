@@ -8,6 +8,19 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-04-26
+
+### Changed
+
+- Switched local authority boundary overlay to zoom-tiered pg_tileserv tables (`public.la_tiles_z0_4`, `public.la_tiles_z5_7`, `public.la_tiles_z8_10`, `public.la_tiles_z11_14`) with tier-matched layer zoom windows.
+- Switched health boundary overlays to zoom-tiered pg_tileserv tables for NHS England regions (`public.nhser_tiles_2021_*`), ICBs (`public.icb_tiles_2023_*`), and Welsh LHBs (`public.lhb_tiles_2022_*`).
+- Corrected overlay `source-layer` usage to match pg_tileserv behavior (table name without `public.` schema prefix).
+- Updated overlay visibility handling so hide/show applies across all zoom-tier boundary layers.
+
+### Added
+
+- Unit tests covering tiered overlay source/layer creation, source-layer naming, and overlay hide behavior across tiers.
+
 ## [0.1.0] — 2026-04-20
 
 ### Added
