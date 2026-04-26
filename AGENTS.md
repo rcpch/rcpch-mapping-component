@@ -136,24 +136,25 @@ Overlay tile views are zoom-tiered, matching choropleth switching:
 
 | Overlay | Tier | Full table | Source-layer name |
 | --- | --- | --- | --- |
-| Local authority | `z0_4` | `public.la_tiles_z0_4` | `la_tiles_z0_4` |
-| Local authority | `z5_7` | `public.la_tiles_z5_7` | `la_tiles_z5_7` |
-| Local authority | `z8_10` | `public.la_tiles_z8_10` | `la_tiles_z8_10` |
-| Local authority | `z11_14` | `public.la_tiles_z11_14` | `la_tiles_z11_14` |
-| NHS England regions | `z0_4` | `public.nhser_tiles_2021_z0_4` | `nhser_tiles_2021_z0_4` |
-| NHS England regions | `z5_7` | `public.nhser_tiles_2021_z5_7` | `nhser_tiles_2021_z5_7` |
-| NHS England regions | `z8_10` | `public.nhser_tiles_2021_z8_10` | `nhser_tiles_2021_z8_10` |
-| NHS England regions | `z11_14` | `public.nhser_tiles_2021_z11_14` | `nhser_tiles_2021_z11_14` |
-| ICBs | `z0_4` | `public.icb_tiles_2023_z0_4` | `icb_tiles_2023_z0_4` |
-| ICBs | `z5_7` | `public.icb_tiles_2023_z5_7` | `icb_tiles_2023_z5_7` |
-| ICBs | `z8_10` | `public.icb_tiles_2023_z8_10` | `icb_tiles_2023_z8_10` |
-| ICBs | `z11_14` | `public.icb_tiles_2023_z11_14` | `icb_tiles_2023_z11_14` |
-| Local health boards | `z0_4` | `public.lhb_tiles_2022_z0_4` | `lhb_tiles_2022_z0_4` |
-| Local health boards | `z5_7` | `public.lhb_tiles_2022_z5_7` | `lhb_tiles_2022_z5_7` |
-| Local health boards | `z8_10` | `public.lhb_tiles_2022_z8_10` | `lhb_tiles_2022_z8_10` |
-| Local health boards | `z11_14` | `public.lhb_tiles_2022_z11_14` | `lhb_tiles_2022_z11_14` |
+| Local authority | `z0_4` | `public.la_tiles_z0_4` | `public.la_tiles_z0_4` |
+| Local authority | `z5_7` | `public.la_tiles_z5_7` | `public.la_tiles_z5_7` |
+| Local authority | `z8_10` | `public.la_tiles_z8_10` | `public.la_tiles_z8_10` |
+| Local authority | `z11_14` | `public.la_tiles_z11_14` | `public.la_tiles_z11_14` |
+| NHS England regions | `z0_4` | `public.nhser_tiles_2021_z0_4` | `public.nhser_tiles_2021_z0_4` |
+| NHS England regions | `z5_7` | `public.nhser_tiles_2021_z5_7` | `public.nhser_tiles_2021_z5_7` |
+| NHS England regions | `z8_10` | `public.nhser_tiles_2021_z8_10` | `public.nhser_tiles_2021_z8_10` |
+| NHS England regions | `z11_14` | `public.nhser_tiles_2021_z11_14` | `public.nhser_tiles_2021_z11_14` |
+| ICBs | `z0_4` | `public.icb_tiles_2023_z0_4` | `public.icb_tiles_2023_z0_4` |
+| ICBs | `z5_7` | `public.icb_tiles_2023_z5_7` | `public.icb_tiles_2023_z5_7` |
+| ICBs | `z8_10` | `public.icb_tiles_2023_z8_10` | `public.icb_tiles_2023_z8_10` |
+| ICBs | `z11_14` | `public.icb_tiles_2023_z11_14` | `public.icb_tiles_2023_z11_14` |
+| Local health boards | `z0_4` | `public.lhb_tiles_2022_z0_4` | `public.lhb_tiles_2022_z0_4` |
+| Local health boards | `z5_7` | `public.lhb_tiles_2022_z5_7` | `public.lhb_tiles_2022_z5_7` |
+| Local health boards | `z8_10` | `public.lhb_tiles_2022_z8_10` | `public.lhb_tiles_2022_z8_10` |
+| Local health boards | `z11_14` | `public.lhb_tiles_2022_z11_14` | `public.lhb_tiles_2022_z11_14` |
 
-As with choropleth tiles, MapLibre layers should use the table name without schema as `source-layer`.
+Overlay builders keep tile URL table id and `source-layer` identical to avoid rendering mismatches.
+Choropleth tiles continue to use `uk_master_<era>_<tier>` as `source-layer`.
 
 ### Canonical choropleth properties
 
