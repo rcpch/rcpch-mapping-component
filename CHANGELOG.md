@@ -8,6 +8,14 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-27
+
+### Changed
+
+- Updated all-UK era resolution so `initialNation: 'all'` honours the requested era instead of always forcing `2011`.
+- Documented the mixed-vintage `uk_master_2021_*` UK tiles, where England uses 2021 LSOA boundaries with 2025 IMD data while Wales, Scotland, and Northern Ireland remain on their current older datasets.
+- Clarified in the public docs that `era` refers to the LSOA boundary year, not the IMD publication year, and documented the England pairings of `2011` → 2011 LSOAs + 2019 IMD and `2021` → 2021 LSOAs + 2025 IMD.
+
 ## [0.2.0] — 2026-04-26
 
 ### Changed
