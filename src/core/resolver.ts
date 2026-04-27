@@ -15,7 +15,9 @@ import type { Nation, Era } from '../types/public';
 //   N. Ireland  → always 2017 NIMDM on 2001 SOAs
 //
 // Rules:
-//   all-UK view       → always 2011 era (uk_master_2011_* so all 4 nations appear)
+//   all-UK view       → consumer-requested era (default 2021)
+//                       2021 uses mixed-vintage UK tiles: England 2021 LSOAs + 2025 IMD,
+//                       with Wales / Scotland / N. Ireland remaining on their current data
 //   england only      → consumer-requested era (2011 or 2021, default 2021)
 //   wales / scotland  → fixed to 2011 era in current tile infrastructure
 //   northern ireland  → fixed to 2011 era in current tile infrastructure
@@ -27,7 +29,7 @@ import type { Nation, Era } from '../types/public';
 export function resolveEffectiveEra(nation: Nation, requestedEra: Era): Era {
   switch (nation) {
     case 'all':
-      return '2011';
+      return requestedEra;
     case 'england':
       return requestedEra;
     case 'wales':

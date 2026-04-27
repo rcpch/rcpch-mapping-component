@@ -9,9 +9,9 @@ import {
 } from '../../src/core/resolver';
 
 describe('resolveEffectiveEra', () => {
-  it('always returns 2011 for all-UK view regardless of requested era', () => {
+  it('honours the requested era for all-UK view', () => {
     expect(resolveEffectiveEra('all', '2011')).toBe('2011');
-    expect(resolveEffectiveEra('all', '2021')).toBe('2011');
+    expect(resolveEffectiveEra('all', '2021')).toBe('2021');
   });
 
   it('honours the requested era for England', () => {
@@ -36,12 +36,9 @@ describe('resolveEffectiveEra', () => {
 });
 
 describe('willEraBeOverridden', () => {
-  it('returns true when all-UK nation is used with 2021 era', () => {
-    expect(willEraBeOverridden('all', '2021')).toBe(true);
-  });
-
-  it('returns false when all-UK nation is used with 2011 era', () => {
+  it('returns false when all-UK nation is used with either supported era', () => {
     expect(willEraBeOverridden('all', '2011')).toBe(false);
+    expect(willEraBeOverridden('all', '2021')).toBe(false);
   });
 
   it('returns false for England with any era', () => {

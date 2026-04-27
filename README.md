@@ -69,7 +69,7 @@ The UMD bundle includes MapLibre GL. No separate script tag required.
 ```html
 <div id="map" style="height: 600px"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@rcpch/imd-map@0.1.0/dist/umd/rcpch-imd-map.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@rcpch/imd-map@0.3.0/dist/umd/rcpch-imd-map.min.js"></script>
 <script>
   const map = RcpchImdMap.createImdMap({
     container: 'map',
@@ -216,15 +216,47 @@ Bring your own overlay configuration (custom overlay table/layer names via libra
 
 ## Nation and era rules
 
+The `era` option refers to the boundary year used for the LSOA geography, not the IMD publication year.
+
+For England, the supported pairings are:
+
+- `2011` era = 2011 LSOA boundaries + 2019 IMD data
+- `2021` era = 2021 LSOA boundaries + 2025 IMD data
+
 | Nation | Requested era | Effective era |
 |---|---|---|
-| `all` | any | always `2011` |
+| `all` | `2011` or `2021` | as requested |
 | `england` | `2011` or `2021` | as requested |
 | `wales` | any | always `2011` |
 | `scotland` | any | always `2011` |
 | `northern_ireland` | any | always `2011` |
 
 When the effective era differs from the requested era, `onWarning` is called with code `ERA_OVERRIDE`.
+
+For all-UK maps, `initialEra: '2021'` now uses the mixed-vintage `uk_master_2021_*` tables: England renders with 2021 LSOA boundaries and 2025 IMD data, while Wales, Scotland, and Northern Ireland continue to render from their existing older datasets within the same UK tile family. Use `initialEra: '2011'` when you want the older England 2011 LSOA + 2019 IMD view alongside the existing Welsh and other nation data.
+
+This means you can instantiate two separate UK maps in the same application, choosing the England boundary/IMD pairing by era:
+
+```js
+const historicalMap = createImdMap({
+  container: 'map-2011',
+  tilesBaseUrl: 'https://your-tile-server.example.com',
+  initialNation: 'all',
+  initialEra: '2011',
+});
+
+const currentMap = createImdMap({
+  container: 'map-2021',
+  tilesBaseUrl: 'https://your-tile-server.example.com',
+  initialNation: 'all',
+  initialEra: '2021',
+});
+```
+
+In a patient-facing application, a common pattern would be:
+
+- patients before 2025 or 2026 cutoff: `initialEra: '2011'`
+- patients in the newer cohort: `initialEra: '2021'`
 
 ---
 
