@@ -103,13 +103,28 @@ export function resolveFullTableName(effectiveEra: Era, tier: ZoomTier): string 
   return `public.uk_master_${effectiveEra}_${tier}`;
 }
 
+export interface TileAuthOptions {
+  apiKey?: string;
+  apiKeyParam?: string;
+}
+
 /**
  * Build a MapLibre-compatible tile URL template for a given table.
  * pg_tileserv format: {base}/public.{tableName}/{z}/{x}/{y}.pbf
  */
-export function buildTileUrl(tilesBaseUrl: string, fullTableName: string): string {
+export function buildTileUrl(
+  tilesBaseUrl: string,
+  fullTableName: string,
+  auth?: TileAuthOptions,
+): string {
   const base = tilesBaseUrl.replace(/\/$/, '');
-  return `${base}/${fullTableName}/{z}/{x}/{y}.pbf`;
+  const tileUrl = `${base}/${fullTableName}/{z}/{x}/{y}.pbf`;
+
+  if (!auth?.apiKey) return tileUrl;
+
+  const paramName = auth.apiKeyParam?.trim() || 'api_key';
+  const separator = tileUrl.includes('?') ? '&' : '?';
+  return `${tileUrl}${separator}${encodeURIComponent(paramName)}=${encodeURIComponent(auth.apiKey)}`;
 }
 
 // ── Nation filter expressions ─────────────────────────────────────────────────

@@ -109,6 +109,24 @@ describe('overlay tiered sources and layers', () => {
 		]);
 	});
 
+	it('appends tile auth query parameter to tiered local authority URLs', () => {
+		const map = new MockMap();
+
+		addOrUpdateLocalAuthorityOverlay(
+			map as unknown as Parameters<typeof addOrUpdateLocalAuthorityOverlay>[0],
+			'https://tiles.example.com',
+			DEFAULT_STYLE,
+			{ apiKey: 'switchable-key', apiKeyParam: 'key' },
+		);
+
+		expect(map.addSourceCalls.map((c) => c.source.tiles[0])).toEqual([
+			'https://tiles.example.com/public.la_tiles_z0_4/{z}/{x}/{y}.pbf?key=switchable-key',
+			'https://tiles.example.com/public.la_tiles_z5_7/{z}/{x}/{y}.pbf?key=switchable-key',
+			'https://tiles.example.com/public.la_tiles_z8_10/{z}/{x}/{y}.pbf?key=switchable-key',
+			'https://tiles.example.com/public.la_tiles_z11_14/{z}/{x}/{y}.pbf?key=switchable-key',
+		]);
+	});
+
 	it('updates existing tiered NHSER vector sources via setTiles', () => {
 		const map = new MockMap();
 		const seeded = [

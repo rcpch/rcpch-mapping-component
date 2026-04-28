@@ -2,6 +2,7 @@ import { VectorTileSource } from 'maplibre-gl';
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type { MapStyleOptions } from '../types/public';
 import { buildTileUrl, ZOOM_TIERS } from '../core/resolver';
+import type { TileAuthOptions } from '../core/resolver';
 import { buildMvtLayerName } from './mvtLayerName';
 
 export const NHSER_SOURCE_ID = 'rcpch-imd-nhser-overlay';
@@ -26,6 +27,7 @@ function overlayLayerId(baseLayerId: string, tier: string): string {
 function addOrUpdateBoundaryOverlay(
 	map: MaplibreMap,
 	tilesBaseUrl: string,
+	tileAuth: TileAuthOptions | undefined,
 	input: {
 		sourceId: string;
 		layerId: string;
@@ -39,7 +41,7 @@ function addOrUpdateBoundaryOverlay(
 		const layerId = overlayLayerId(input.layerId, tier);
 		const fullTableName = buildMvtLayerName(input.tablePrefix, tier);
 		const sourceLayer = fullTableName;
-		const tileUrl = buildTileUrl(tilesBaseUrl, fullTableName);
+		const tileUrl = buildTileUrl(tilesBaseUrl, fullTableName, tileAuth);
 		const existing = map.getSource(sourceId);
 
 		if (existing instanceof VectorTileSource) {
@@ -83,8 +85,9 @@ export function addOrUpdateNhserOverlay(
 	map: MaplibreMap,
 	tilesBaseUrl: string,
 	style: Required<MapStyleOptions>,
+	tileAuth?: TileAuthOptions,
 ): void {
-	addOrUpdateBoundaryOverlay(map, tilesBaseUrl, {
+	addOrUpdateBoundaryOverlay(map, tilesBaseUrl, tileAuth, {
 		sourceId: NHSER_SOURCE_ID,
 		layerId: NHSER_LAYER_ID,
 		tablePrefix: NHSER_TABLE_PREFIX,
@@ -97,8 +100,9 @@ export function addOrUpdateIcbOverlay(
 	map: MaplibreMap,
 	tilesBaseUrl: string,
 	style: Required<MapStyleOptions>,
+	tileAuth?: TileAuthOptions,
 ): void {
-	addOrUpdateBoundaryOverlay(map, tilesBaseUrl, {
+	addOrUpdateBoundaryOverlay(map, tilesBaseUrl, tileAuth, {
 		sourceId: ICB_SOURCE_ID,
 		layerId: ICB_LAYER_ID,
 		tablePrefix: ICB_TABLE_PREFIX,
@@ -111,8 +115,9 @@ export function addOrUpdateLhbOverlay(
 	map: MaplibreMap,
 	tilesBaseUrl: string,
 	style: Required<MapStyleOptions>,
+	tileAuth?: TileAuthOptions,
 ): void {
-	addOrUpdateBoundaryOverlay(map, tilesBaseUrl, {
+	addOrUpdateBoundaryOverlay(map, tilesBaseUrl, tileAuth, {
 		sourceId: LHB_SOURCE_ID,
 		layerId: LHB_LAYER_ID,
 		tablePrefix: LHB_TABLE_PREFIX,
