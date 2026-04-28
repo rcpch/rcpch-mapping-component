@@ -4,6 +4,7 @@ import type { FeatureCollection, Point } from 'geojson';
 import type { Era } from '../types/public';
 import { ZOOM_TIERS, resolveFullTableName, buildTileUrl } from '../core/resolver';
 import type { ZoomTier } from '../core/resolver';
+import type { TileAuthOptions } from '../core/resolver';
 
 // ── Choropleth source IDs ─────────────────────────────────────────────────────
 //
@@ -30,11 +31,12 @@ export function addOrUpdateChoroplethSources(
   map: MaplibreMap,
   tilesBaseUrl: string,
   effectiveEra: Era,
+  tileAuth?: TileAuthOptions,
 ): void {
   for (const { tier } of ZOOM_TIERS) {
     const sourceId = choroplethSourceId(tier);
     const fullTableName = resolveFullTableName(effectiveEra, tier);
-    const tileUrl = buildTileUrl(tilesBaseUrl, fullTableName);
+    const tileUrl = buildTileUrl(tilesBaseUrl, fullTableName, tileAuth);
 
     const existing = map.getSource(sourceId);
     if (existing instanceof VectorTileSource) {

@@ -201,6 +201,24 @@ Tile URL resolution precedence:
 
 The library source contains **no hardcoded tile URLs**.
 
+Optional tile auth query options:
+
+- `tilesApiKey`: appends a query value to all choropleth and overlay tile requests
+- `tilesApiKeyParam`: query parameter name for `tilesApiKey` (default: `api_key`)
+
+Example:
+
+```js
+createImdMap({
+  container: 'map',
+  tilesBaseUrl: 'https://your-tile-server.example.com',
+  tilesApiKey: 'switchable-browser-token',
+  tilesApiKeyParam: 'key',
+});
+```
+
+This is useful for revoking abusive traffic quickly, but browser-delivered keys must still be treated as non-secret.
+
 ### Overlay boundary tile contract
 
 Boundary overlays (local authority, NHSER, ICB, LHB) are requested from schema-qualified table ids and rendered with the same schema-qualified `source-layer` name. Example:
@@ -407,6 +425,8 @@ map.setStyle({ tooltip: { areaLabel: 'Local area' } });
 |---|---|---|---|
 | `container` | `string \| HTMLElement` | — | DOM element ID or element reference |
 | `tilesBaseUrl` | `string` | — | Base URL of the tile server |
+| `tilesApiKey` | `string` | — | Optional API key appended to tile URLs as a query parameter |
+| `tilesApiKeyParam` | `string` | `'api_key'` | Query parameter name used for `tilesApiKey` |
 | `initialNation` | `Nation` | `'all'` | Starting nation filter |
 | `initialEra` | `Era` | `'2021'` | Requested era (may be overridden) |
 | `enableLocalAuthorityOverlay` | `boolean` | `false` | Show local authority boundary overlay at startup |

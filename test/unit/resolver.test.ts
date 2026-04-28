@@ -109,6 +109,23 @@ describe('buildTileUrl', () => {
       'http://localhost:7800/public.uk_master_2011_z5_7/{z}/{x}/{y}.pbf',
     );
   });
+
+  it('appends a default api_key query parameter when tile auth key is provided', () => {
+    expect(
+      buildTileUrl('https://tiles.example.com', 'public.uk_master_2021_z0_4', {
+        apiKey: 'test-key',
+      }),
+    ).toBe('https://tiles.example.com/public.uk_master_2021_z0_4/{z}/{x}/{y}.pbf?api_key=test-key');
+  });
+
+  it('supports a custom query parameter name for tile auth', () => {
+    expect(
+      buildTileUrl('https://tiles.example.com', 'public.uk_master_2021_z0_4', {
+        apiKey: 'test-key',
+        apiKeyParam: 'key',
+      }),
+    ).toBe('https://tiles.example.com/public.uk_master_2021_z0_4/{z}/{x}/{y}.pbf?key=test-key');
+  });
 });
 
 describe('resolveNationFilter', () => {

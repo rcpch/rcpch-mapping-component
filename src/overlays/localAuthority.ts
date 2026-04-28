@@ -2,6 +2,7 @@ import { VectorTileSource } from 'maplibre-gl';
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type { MapStyleOptions } from '../types/public';
 import { buildTileUrl, ZOOM_TIERS } from '../core/resolver';
+import type { TileAuthOptions } from '../core/resolver';
 import { buildMvtLayerName } from './mvtLayerName';
 
 export const LOCAL_AUTHORITY_SOURCE_ID = 'rcpch-imd-la-overlay';
@@ -21,13 +22,14 @@ export function addOrUpdateLocalAuthorityOverlay(
 	map: MaplibreMap,
 	tilesBaseUrl: string,
 	style: Required<MapStyleOptions>,
+	tileAuth?: TileAuthOptions,
 ): void {
 	for (const { tier, minzoom, maxzoom } of ZOOM_TIERS) {
 		const sourceId = localAuthoritySourceId(tier);
 		const layerId = localAuthorityLayerId(tier);
 		const fullTableName = buildMvtLayerName(LOCAL_AUTHORITY_TABLE_PREFIX, tier);
 		const sourceLayer = fullTableName;
-		const tileUrl = buildTileUrl(tilesBaseUrl, fullTableName);
+		const tileUrl = buildTileUrl(tilesBaseUrl, fullTableName, tileAuth);
 		const existing = map.getSource(sourceId);
 
 		if (existing instanceof VectorTileSource) {

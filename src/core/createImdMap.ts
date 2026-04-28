@@ -74,6 +74,10 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   if (!tilesBaseUrl) {
     logger.warn('No tilesBaseUrl provided. Choropleth tiles will not load.');
   }
+  const tileAuth = {
+    apiKey: options.tilesApiKey,
+    apiKeyParam: options.tilesApiKeyParam,
+  };
 
   // ── Resolve style and initial state ────────────────────────────────────────
   let resolvedStyle = mergeStyle(DEFAULT_STYLE, options.style);
@@ -198,25 +202,25 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     const canShowLhb = nation === 'all' || nation === 'wales';
 
     if (state.overlays.localAuthority) {
-      addOrUpdateLocalAuthorityOverlay(map, tilesBaseUrl, resolvedStyle);
+      addOrUpdateLocalAuthorityOverlay(map, tilesBaseUrl, resolvedStyle, tileAuth);
     } else {
       hideLocalAuthorityOverlay(map);
     }
 
     if (state.overlays.nhser && canShowNhser) {
-      addOrUpdateNhserOverlay(map, tilesBaseUrl, resolvedStyle);
+      addOrUpdateNhserOverlay(map, tilesBaseUrl, resolvedStyle, tileAuth);
     } else {
       hideNhserOverlay(map);
     }
 
     if (state.overlays.icb && canShowIcb) {
-      addOrUpdateIcbOverlay(map, tilesBaseUrl, resolvedStyle);
+      addOrUpdateIcbOverlay(map, tilesBaseUrl, resolvedStyle, tileAuth);
     } else {
       hideIcbOverlay(map);
     }
 
     if (state.overlays.lhb && canShowLhb) {
-      addOrUpdateLhbOverlay(map, tilesBaseUrl, resolvedStyle);
+      addOrUpdateLhbOverlay(map, tilesBaseUrl, resolvedStyle, tileAuth);
     } else {
       hideLhbOverlay(map);
     }
@@ -258,13 +262,16 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   }
 
   logger.debug(`tilesBaseUrl resolved to: "${tilesBaseUrl}"`);
+  if (tileAuth.apiKey) {
+    logger.debug('Tile API key is configured for tile URL requests.');
+  }
 
   // ── Map load handler ────────────────────────────────────────────────────────
   map.on('load', () => {
     mapLoaded = true;
 
     if (tilesBaseUrl) {
-      addOrUpdateChoroplethSources(map, tilesBaseUrl, state.effectiveEra);
+      addOrUpdateChoroplethSources(map, tilesBaseUrl, state.effectiveEra, tileAuth);
       addChoroplethLayers(map, state.nation, state.effectiveEra, resolvedStyle);
     }
 
@@ -330,7 +337,7 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       if (eraChanged) {
         // Era change: sources must serve new table family; rebuild layers.
         removeChoroplethLayers(map);
-        addOrUpdateChoroplethSources(map, tilesBaseUrl, newEffectiveEra);
+        addOrUpdateChoroplethSources(map, tilesBaseUrl, newEffectiveEra, tileAuth);
         addChoroplethLayers(map, newNation, newEffectiveEra, resolvedStyle);
       } else if (nationChanged) {
         // Nation change only: sources stay the same, just update filter expressions.

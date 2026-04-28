@@ -213,6 +213,10 @@ export interface CreateImdMapOptions {
   container: string | HTMLElement;
   /** Base URL of the tile server. Required for choropleth rendering. */
   tilesBaseUrl?: string;
+  /** Optional API key appended to tile URLs as a query string parameter. */
+  tilesApiKey?: string;
+  /** Query parameter name used for tilesApiKey. Default: api_key. */
+  tilesApiKeyParam?: string;
   initialNation?: Nation;
   initialEra?: Era;
   showDefaultControls?: boolean;
