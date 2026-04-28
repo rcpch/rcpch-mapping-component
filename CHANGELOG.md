@@ -8,6 +8,20 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-04-28
+
+### Added
+
+- Optional tile API key support via `tilesApiKey` and `tilesApiKeyParam` options in `CreateImdMapOptions`.
+- Tile API key query parameters are appended to all choropleth and boundary overlay tile requests.
+- Customizable query parameter name for tile auth (defaults to `api_key`).
+- Unit test coverage for tile URL builder with optional auth and auth propagation across overlays.
+
+### Documentation
+
+- Updated README runtime tile configuration section with tile auth options and example usage.
+- Added note that browser-delivered keys are non-secret and primarily useful for operational traffic control (rate limiting, revocation, origin restrictions).
+
 ## [0.3.0] — 2026-04-27
 
 ### Changed
