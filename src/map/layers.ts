@@ -64,7 +64,7 @@ function buildColorExpression(nation: Nation, style: Required<MapStyleOptions>):
   }
 
   const perNation = (
-    ['england', 'wales', 'scotland', 'northern_ireland'] as const
+    ['england', 'wales', 'scotland', 'northern_ireland', 'channel_islands'] as const
   ).flatMap((n) => [n, buildDecileColorExpression(getDecileColors(n, style))]);
 
   return [

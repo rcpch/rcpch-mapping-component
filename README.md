@@ -236,22 +236,23 @@ Bring your own overlay configuration (custom overlay table/layer names via libra
 
 The `era` option refers to the boundary year used for the LSOA geography, not the IMD publication year.
 
-For England, the supported pairings are:
+For England and Channel Islands, the supported pairings are:
 
-- `2011` era = 2011 LSOA boundaries + 2019 IMD data
-- `2021` era = 2021 LSOA boundaries + 2025 IMD data
+- `2011` era = 2011 LSOA boundaries + 2019 IMD data (England only)
+- `2021` era = 2021 LSOA boundaries + 2025 IMD data (England only); Channel Islands on 2024 boundaries
 
 | Nation | Requested era | Effective era |
 |---|---|---|
 | `all` | `2011` or `2021` | as requested |
 | `england` | `2011` or `2021` | as requested |
+| `channel_islands` | `2011` or `2021` | as requested (2024 boundaries in both) |
 | `wales` | any | always `2011` |
 | `scotland` | any | always `2011` |
 | `northern_ireland` | any | always `2011` |
 
 When the effective era differs from the requested era, `onWarning` is called with code `ERA_OVERRIDE`.
 
-For all-UK maps, `initialEra: '2021'` now uses the mixed-vintage `uk_master_2021_*` tables: England renders with 2021 LSOA boundaries and 2025 IMD data, while Wales, Scotland, and Northern Ireland continue to render from their existing older datasets within the same UK tile family. Use `initialEra: '2011'` when you want the older England 2011 LSOA + 2019 IMD view alongside the existing Welsh and other nation data.
+For all-UK maps, `initialEra: '2021'` now uses the mixed-vintage `uk_master_2021_*` tables: England renders with 2021 LSOA boundaries and 2025 IMD data, Channel Islands renders with 2024 boundaries, while Wales, Scotland, and Northern Ireland continue to render from their existing older datasets within the same UK tile family. Use `initialEra: '2011'` when you want the older England 2011 LSOA + 2019 IMD view alongside the existing Welsh and other nation data.
 
 This means you can instantiate two separate UK maps in the same application, choosing the England boundary/IMD pairing by era:
 
@@ -294,6 +295,7 @@ createImdMap({
         wales: '#1a9641',
         scotland: '#2b83ba',
         northern_ireland: '#7f7f7f',
+        channel_islands: '#d1d5db',
       },
       // 10 hex colors, index 0 = decile 1 (most deprived)
       fallbackDecileColors: ['#7a0036', ...],

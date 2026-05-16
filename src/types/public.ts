@@ -2,7 +2,7 @@ import type { Feature, FeatureCollection, Point } from 'geojson';
 
 // ── Basic domain types ────────────────────────────────────────────────────────
 
-export type Nation = 'all' | 'england' | 'wales' | 'scotland' | 'northern_ireland';
+export type Nation = 'all' | 'england' | 'wales' | 'scotland' | 'northern_ireland' | 'channel_islands';
 export type Era = '2011' | '2021';
 
 // ── Style options ─────────────────────────────────────────────────────────────
