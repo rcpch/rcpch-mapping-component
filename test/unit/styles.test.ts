@@ -40,11 +40,13 @@ describe('styles', () => {
     const wales = getDecileColors('wales', DEFAULT_STYLE);
     const scotland = getDecileColors('scotland', DEFAULT_STYLE);
     const northernIreland = getDecileColors('northern_ireland', DEFAULT_STYLE);
+    const channelIslands = getDecileColors('channel_islands', DEFAULT_STYLE);
 
     const [er, eg, eb] = hexToRgb(england[4]);
     const [wr, wg, wb] = hexToRgb(wales[4]);
     const [sr, sg, sb] = hexToRgb(scotland[4]);
     const [nr, ng, nb] = hexToRgb(northernIreland[4]);
+    const [cr, cg, cb] = hexToRgb(channelIslands[4]);
 
     expect(er).toBeGreaterThan(eg);
     expect(er).toBeGreaterThan(eb);
@@ -57,6 +59,9 @@ describe('styles', () => {
 
     expect(Math.abs(nr - ng)).toBeLessThan(12);
     expect(Math.abs(ng - nb)).toBeLessThan(12);
+
+    expect(Math.abs(cr - cg)).toBeLessThan(12);
+    expect(Math.abs(cg - cb)).toBeLessThan(12);
   });
 
   it('uses baseColorByNation to generate custom ramps', () => {

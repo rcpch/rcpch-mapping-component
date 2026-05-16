@@ -15,6 +15,7 @@ export const DEFAULT_BASE_COLORS_BY_NATION: Record<Nation, string> = {
   wales: '#1a9641',
   scotland: '#2b83ba',
   northern_ireland: '#7f7f7f',
+  channel_islands: '#d1d5db',
   all: '#d7191c',
 };
 
@@ -142,6 +143,7 @@ export const DEFAULT_STYLE: Required<MapStyleOptions> = {
       wales: DEFAULT_BASE_COLORS_BY_NATION.wales,
       scotland: DEFAULT_BASE_COLORS_BY_NATION.scotland,
       northern_ireland: DEFAULT_BASE_COLORS_BY_NATION.northern_ireland,
+      channel_islands: DEFAULT_BASE_COLORS_BY_NATION.channel_islands,
     },
     fallbackDecileColors: generateDecileRampFromBaseColor(DEFAULT_BASE_COLORS_BY_NATION.england),
     fillOpacity: 0.7,
