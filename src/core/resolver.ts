@@ -17,8 +17,10 @@ import type { Nation, Era } from '../types/public';
 // Rules:
 //   all-UK view       → consumer-requested era (default 2021)
 //                       2021 uses mixed-vintage UK tiles: England 2021 LSOAs + 2025 IMD,
-//                       with Wales / Scotland / N. Ireland remaining on their current data
+//                       with Wales / Scotland / N. Ireland remaining on their current data,
+//                       and Channel Islands on 2024 boundaries
 //   england only      → consumer-requested era (2011 or 2021, default 2021)
+//   channel islands   → consumer-requested era (2011 or 2021; 2024 boundaries in both)
 //   wales / scotland  → fixed to 2011 era in current tile infrastructure
 //   northern ireland  → fixed to 2011 era in current tile infrastructure
 
@@ -31,6 +33,8 @@ export function resolveEffectiveEra(nation: Nation, requestedEra: Era): Era {
     case 'all':
       return requestedEra;
     case 'england':
+      return requestedEra;
+    case 'channel_islands':
       return requestedEra;
     case 'wales':
     case 'scotland':
@@ -133,7 +137,7 @@ export function buildTileUrl(
 // When a specific nation is selected, apply a MapLibre filter expression to
 // restrict rendered features. For 'all', no filter is applied.
 
-export type NationFilterValue = 'england' | 'wales' | 'scotland' | 'northern_ireland' | null;
+export type NationFilterValue = 'england' | 'wales' | 'scotland' | 'northern_ireland' | 'channel_islands' | null;
 
 /**
  * Return a MapLibre filter expression to restrict tiles to a single nation,

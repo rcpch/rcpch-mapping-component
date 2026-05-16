@@ -33,6 +33,11 @@ describe('resolveEffectiveEra', () => {
     expect(resolveEffectiveEra('northern_ireland', '2011')).toBe('2011');
     expect(resolveEffectiveEra('northern_ireland', '2021')).toBe('2011');
   });
+
+  it('honours the requested era for Channel Islands', () => {
+    expect(resolveEffectiveEra('channel_islands', '2011')).toBe('2011');
+    expect(resolveEffectiveEra('channel_islands', '2021')).toBe('2021');
+  });
 });
 
 describe('willEraBeOverridden', () => {
@@ -44,6 +49,11 @@ describe('willEraBeOverridden', () => {
   it('returns false for England with any era', () => {
     expect(willEraBeOverridden('england', '2011')).toBe(false);
     expect(willEraBeOverridden('england', '2021')).toBe(false);
+  });
+
+  it('returns false for Channel Islands with either era', () => {
+    expect(willEraBeOverridden('channel_islands', '2011')).toBe(false);
+    expect(willEraBeOverridden('channel_islands', '2021')).toBe(false);
   });
 
   it('returns true for Wales / Scotland / NI when 2021 era is requested', () => {
@@ -147,6 +157,10 @@ describe('resolveNationFilter', () => {
 
   it('returns a filter for Northern Ireland', () => {
     expect(resolveNationFilter('northern_ireland')).toEqual(['==', ['get', 'nation'], 'northern_ireland']);
+  });
+
+  it('returns a filter for Channel Islands', () => {
+    expect(resolveNationFilter('channel_islands')).toEqual(['==', ['get', 'nation'], 'channel_islands']);
   });
 });
 

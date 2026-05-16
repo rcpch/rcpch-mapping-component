@@ -107,13 +107,14 @@ Tile URL format:
 
 - Era key means boundary year, not publication year or IMD publication year
 - Default requested era is `2021`
-- England supports both:
-  - `2021` = 2021 LSOA boundaries + 2025 IMD
-  - `2011` = 2011 LSOA boundaries + 2019 IMD
+- England and Channel Islands honour the requested era:
+  - England `2021` = 2021 LSOA boundaries + 2025 IMD
+  - England `2011` = 2011 LSOA boundaries + 2019 IMD
+  - Channel Islands `2021` or `2011` = 2024 boundaries (no IMD data; colour is applied uniformly, default light grey)
 - Wales, Scotland, and Northern Ireland are fixed to `2011` in the current tile infrastructure
 - All-UK view honours the requested era:
-  - `2021` = mixed-vintage `uk_master_2021_*` tables with England on 2021 LSOAs + 2025 IMD and the other nations on their current older datasets
-  - `2011` = `uk_master_2011_*` tables, including England on 2011 LSOAs + 2019 IMD
+  - `2021` = mixed-vintage `uk_master_2021_*` tables with England on 2021 LSOAs + 2025 IMD, Channel Islands on 2024 boundaries, and the other nations on their current datasets
+  - `2011` = `uk_master_2011_*` tables, including England on 2011 LSOAs + 2019 IMD, Channel Islands on 2024 boundaries, and the other nations on their current datasets
 
 The era resolution rules are implemented in `src/core/resolver.ts` and should remain centralized there.
 
