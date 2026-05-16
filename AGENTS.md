@@ -80,7 +80,7 @@ Build config lives in `tsup.config.ts`:
   - build/test/release workflow
   - tile/data contract details
   - integration notes useful to agents and maintainers
-- `PROGRESS.md` should only track release readiness, remaining work, and integration checklist items
+- Release readiness should be tracked via `CHANGELOG.md`, GitHub issues, and release metadata
 
 ## Tile contract and dataset rules
 

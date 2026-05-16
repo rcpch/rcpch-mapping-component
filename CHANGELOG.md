@@ -8,6 +8,24 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-05-16
+
+### Added
+
+- Added `channel_islands` as a supported nation value across the public API (`initialNation`, `setNation`, and nation-aware styling).
+- Added resolver and filter support for `channel_islands` in nation filtering and era resolution.
+- Added automated smoke tests for standalone example pages to verify they are served and include expected map initialization and patient plotting hooks.
+
+### Changed
+
+- Updated Channel Islands era behavior to honour the requested era (`2011` or `2021`) while rendering 2024 boundaries in both table families.
+- Included Channel Islands in all-UK nation color matching so all-UK choropleth rendering handles `nation: channel_islands` explicitly.
+- Added default neutral base color wiring for Channel Islands to support no-IMD-data rendering.
+
+### Documentation
+
+- Updated README and AGENTS guidance for Channel Islands nation support and era semantics.
+
 ## [0.3.1] — 2026-04-28
 
 ### Added
