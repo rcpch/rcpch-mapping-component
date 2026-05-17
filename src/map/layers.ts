@@ -1,9 +1,23 @@
-import type { Map as MaplibreMap } from 'maplibre-gl';
-import type { Nation, Era, MapStyleOptions, LeadCentresStyleOptions } from '../types/public';
-import { choroplethSourceId, PATIENTS_SOURCE_ID, LEAD_CENTRE_SOURCE_ID, LEAD_CENTRES_SOURCE_ID } from './sources';
-import { getDecileColors } from './styles';
-import { ZOOM_TIERS, resolveFullTableName, resolveNationFilter } from '../core/resolver';
-import type { ZoomTier } from '../core/resolver';
+import type { Map as MaplibreMap } from "maplibre-gl";
+import type {
+  Nation,
+  Era,
+  MapStyleOptions,
+  LeadCentresStyleOptions,
+} from "../types/public";
+import {
+  choroplethSourceId,
+  PATIENTS_SOURCE_ID,
+  LEAD_CENTRE_SOURCE_ID,
+  LEAD_CENTRES_SOURCE_ID,
+} from "./sources";
+import { getDecileColors } from "./styles";
+import {
+  ZOOM_TIERS,
+  resolveFullTableName,
+  resolveNationFilter,
+} from "../core/resolver";
+import type { ZoomTier } from "../core/resolver";
 
 // ── Layer ID helpers ──────────────────────────────────────────────────────────
 
@@ -20,14 +34,14 @@ export const ALL_CHOROPLETH_LAYER_IDS = ZOOM_TIERS.flatMap((t) => [
   choroplethLineLayerId(t.tier),
 ]);
 
-export const PATIENTS_LAYER_ID = 'rcpch-imd-patients';
-export const LEAD_CENTRE_LAYER_ID = 'rcpch-imd-lead-centre';
-export const LEAD_CENTRES_LAYER_ID = 'rcpch-imd-lead-centres';
+export const PATIENTS_LAYER_ID = "rcpch-imd-patients";
+export const LEAD_CENTRE_LAYER_ID = "rcpch-imd-lead-centre";
+export const LEAD_CENTRES_LAYER_ID = "rcpch-imd-lead-centres";
 
 // Expose a representative fill layer ID for hover/click event binding.
 // We attach mouse events to the high-zoom tier layer as it is most precise
 // at the zoom levels where users will actually interact with individual areas.
-export const CHOROPLETH_FILL_LAYER_ID = choroplethFillLayerId('z8_10');
+export const CHOROPLETH_FILL_LAYER_ID = choroplethFillLayerId("z8_10");
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -35,20 +49,29 @@ export const CHOROPLETH_FILL_LAYER_ID = choroplethFillLayerId('z8_10');
  * Build a MapLibre step expression mapping imd_decile (1–10) to colors.
  */
 function buildDecileColorExpression(colors: string[]): unknown[] {
-  const fallback = colors[0] ?? '#cccccc';
+  const fallback = colors[0] ?? "#cccccc";
   return [
-    'step',
-    ['get', 'imd_decile'],
+    "step",
+    ["get", "imd_decile"],
     fallback,
-    2, colors[1] ?? fallback,
-    3, colors[2] ?? fallback,
-    4, colors[3] ?? fallback,
-    5, colors[4] ?? fallback,
-    6, colors[5] ?? fallback,
-    7, colors[6] ?? fallback,
-    8, colors[7] ?? fallback,
-    9, colors[8] ?? fallback,
-    10, colors[9] ?? fallback,
+    2,
+    colors[1] ?? fallback,
+    3,
+    colors[2] ?? fallback,
+    4,
+    colors[3] ?? fallback,
+    5,
+    colors[4] ?? fallback,
+    6,
+    colors[5] ?? fallback,
+    7,
+    colors[6] ?? fallback,
+    8,
+    colors[7] ?? fallback,
+    9,
+    colors[8] ?? fallback,
+    10,
+    colors[9] ?? fallback,
   ];
 }
 
@@ -59,21 +82,30 @@ function buildDecileColorExpression(colors: string[]): unknown[] {
  *   each branch using its own decile color ramp, so England/Wales/Scotland/NI
  *   each render in their own color family simultaneously.
  */
-function buildColorExpression(nation: Nation, style: Required<MapStyleOptions>): unknown[] {
-  if (nation !== 'all') {
+function buildColorExpression(
+  nation: Nation,
+  style: Required<MapStyleOptions>,
+): unknown[] {
+  if (nation !== "all") {
     return buildDecileColorExpression(getDecileColors(nation, style));
   }
 
   const perNation = (
-    ['england', 'wales', 'scotland', 'northern_ireland', 'channel_islands'] as const
+    [
+      "england",
+      "wales",
+      "scotland",
+      "northern_ireland",
+      "channel_islands",
+    ] as const
   ).flatMap((n) => [n, buildDecileColorExpression(getDecileColors(n, style))]);
 
   return [
-    'match',
-    ['get', 'nation'],
+    "match",
+    ["get", "nation"],
     ...perNation,
     // fallback for any unrecognised nation value
-    getDecileColors('england', style)[0] ?? '#cccccc',
+    getDecileColors("england", style)[0] ?? "#cccccc",
   ];
 }
 
@@ -82,7 +114,7 @@ function buildColorExpression(nation: Nation, style: Required<MapStyleOptions>):
  */
 function firstSymbolLayerId(map: MaplibreMap): string | undefined {
   for (const layer of map.getStyle().layers ?? []) {
-    if (layer.type === 'symbol') return layer.id;
+    if (layer.type === "symbol") return layer.id;
   }
   return undefined;
 }
@@ -90,15 +122,15 @@ function firstSymbolLayerId(map: MaplibreMap): string | undefined {
 export function buildPatientCircleColorExpression(
   style: Required<MapStyleOptions>,
 ): string | unknown[] {
-  const fallback = style.patients.circleColor ?? '#0d0d58';
+  const fallback = style.patients.circleColor ?? "#0d0d58";
   const groupMap = style.patients.colorByGroup ?? {};
   const entries = Object.entries(groupMap).filter(([k, v]) => k && v);
 
   if (!entries.length) return fallback;
 
   return [
-    'match',
-    ['coalesce', ['to-string', ['get', 'group']], ''],
+    "match",
+    ["coalesce", ["to-string", ["get", "group"]], ""],
     ...entries.flatMap(([group, color]) => [group, color]),
     fallback,
   ];
@@ -118,7 +150,7 @@ export function addChoroplethLayers(
   removeChoroplethLayers(map);
 
   const nationFilter = resolveNationFilter(nation);
-  const filterProps = nationFilter ? ({ filter: nationFilter as any }) : {};
+  const filterProps = nationFilter ? { filter: nationFilter as any } : {};
   const before = firstSymbolLayerId(map);
 
   for (const { tier, minzoom, maxzoom } of ZOOM_TIERS) {
@@ -130,15 +162,15 @@ export function addChoroplethLayers(
     map.addLayer(
       {
         id: choroplethFillLayerId(tier),
-        type: 'fill',
+        type: "fill",
         source: sourceId,
-        'source-layer': sourceLayer,
+        "source-layer": sourceLayer,
         minzoom,
         maxzoom,
         ...filterProps,
         paint: {
-          'fill-color': colorExpr,
-          'fill-opacity': style.choropleth.fillOpacity ?? 0.7,
+          "fill-color": colorExpr,
+          "fill-opacity": style.choropleth.fillOpacity ?? 0.7,
         },
       },
       before,
@@ -147,15 +179,15 @@ export function addChoroplethLayers(
     map.addLayer(
       {
         id: choroplethLineLayerId(tier),
-        type: 'line',
+        type: "line",
         source: sourceId,
-        'source-layer': sourceLayer,
+        "source-layer": sourceLayer,
         minzoom,
         maxzoom,
         ...filterProps,
         paint: {
-          'line-color': style.choropleth.borderColor ?? '#ffffff',
-          'line-width': style.choropleth.borderWidth ?? 0.5,
+          "line-color": style.choropleth.borderColor ?? "#ffffff",
+          "line-width": style.choropleth.borderWidth ?? 0.5,
         },
       },
       before,
@@ -181,10 +213,22 @@ export function updateChoroplethStyle(
     const fillId = choroplethFillLayerId(tier);
     const lineId = choroplethLineLayerId(tier);
     if (!map.getLayer(fillId)) continue;
-    map.setPaintProperty(fillId, 'fill-color', colorExpr);
-    map.setPaintProperty(fillId, 'fill-opacity', style.choropleth.fillOpacity ?? 0.7);
-    map.setPaintProperty(lineId, 'line-color', style.choropleth.borderColor ?? '#ffffff');
-    map.setPaintProperty(lineId, 'line-width', style.choropleth.borderWidth ?? 0.5);
+    map.setPaintProperty(fillId, "fill-color", colorExpr);
+    map.setPaintProperty(
+      fillId,
+      "fill-opacity",
+      style.choropleth.fillOpacity ?? 0.7,
+    );
+    map.setPaintProperty(
+      lineId,
+      "line-color",
+      style.choropleth.borderColor ?? "#ffffff",
+    );
+    map.setPaintProperty(
+      lineId,
+      "line-width",
+      style.choropleth.borderWidth ?? 0.5,
+    );
   }
 }
 
@@ -222,22 +266,38 @@ export function addOrUpdatePatientsLayer(
   const color = buildPatientCircleColorExpression(style);
 
   if (map.getLayer(PATIENTS_LAYER_ID)) {
-    map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-color', color as any);
-    map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-radius', p.circleRadius ?? 5);
-    map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-stroke-color', p.circleStrokeColor ?? '#ffffff');
-    map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-stroke-width', p.circleStrokeWidth ?? 1);
-    map.setPaintProperty(PATIENTS_LAYER_ID, 'circle-opacity', p.circleOpacity ?? 0.8);
+    map.setPaintProperty(PATIENTS_LAYER_ID, "circle-color", color as any);
+    map.setPaintProperty(
+      PATIENTS_LAYER_ID,
+      "circle-radius",
+      p.circleRadius ?? 5,
+    );
+    map.setPaintProperty(
+      PATIENTS_LAYER_ID,
+      "circle-stroke-color",
+      p.circleStrokeColor ?? "#ffffff",
+    );
+    map.setPaintProperty(
+      PATIENTS_LAYER_ID,
+      "circle-stroke-width",
+      p.circleStrokeWidth ?? 1,
+    );
+    map.setPaintProperty(
+      PATIENTS_LAYER_ID,
+      "circle-opacity",
+      p.circleOpacity ?? 0.8,
+    );
   } else {
     map.addLayer({
       id: PATIENTS_LAYER_ID,
-      type: 'circle',
+      type: "circle",
       source: PATIENTS_SOURCE_ID,
       paint: {
-        'circle-color': color as any,
-        'circle-radius': p.circleRadius ?? 5,
-        'circle-stroke-color': p.circleStrokeColor ?? '#ffffff',
-        'circle-stroke-width': p.circleStrokeWidth ?? 1,
-        'circle-opacity': p.circleOpacity ?? 0.8,
+        "circle-color": color as any,
+        "circle-radius": p.circleRadius ?? 5,
+        "circle-stroke-color": p.circleStrokeColor ?? "#ffffff",
+        "circle-stroke-width": p.circleStrokeWidth ?? 1,
+        "circle-opacity": p.circleOpacity ?? 0.8,
       },
     });
   }
@@ -256,20 +316,36 @@ export function addOrUpdateLeadCentreLayer(
   const lc = style.leadCentre;
 
   if (map.getLayer(LEAD_CENTRE_LAYER_ID)) {
-    map.setPaintProperty(LEAD_CENTRE_LAYER_ID, 'circle-color', lc.color ?? '#e00087');
-    map.setPaintProperty(LEAD_CENTRE_LAYER_ID, 'circle-radius', lc.radius ?? 10);
-    map.setPaintProperty(LEAD_CENTRE_LAYER_ID, 'circle-stroke-color', lc.strokeColor ?? '#ffffff');
-    map.setPaintProperty(LEAD_CENTRE_LAYER_ID, 'circle-stroke-width', lc.strokeWidth ?? 2);
+    map.setPaintProperty(
+      LEAD_CENTRE_LAYER_ID,
+      "circle-color",
+      lc.color ?? "#e00087",
+    );
+    map.setPaintProperty(
+      LEAD_CENTRE_LAYER_ID,
+      "circle-radius",
+      lc.radius ?? 10,
+    );
+    map.setPaintProperty(
+      LEAD_CENTRE_LAYER_ID,
+      "circle-stroke-color",
+      lc.strokeColor ?? "#ffffff",
+    );
+    map.setPaintProperty(
+      LEAD_CENTRE_LAYER_ID,
+      "circle-stroke-width",
+      lc.strokeWidth ?? 2,
+    );
   } else {
     map.addLayer({
       id: LEAD_CENTRE_LAYER_ID,
-      type: 'circle',
+      type: "circle",
       source: LEAD_CENTRE_SOURCE_ID,
       paint: {
-        'circle-color': lc.color ?? '#e00087',
-        'circle-radius': lc.radius ?? 10,
-        'circle-stroke-color': lc.strokeColor ?? '#ffffff',
-        'circle-stroke-width': lc.strokeWidth ?? 2,
+        "circle-color": lc.color ?? "#e00087",
+        "circle-radius": lc.radius ?? 10,
+        "circle-stroke-color": lc.strokeColor ?? "#ffffff",
+        "circle-stroke-width": lc.strokeWidth ?? 2,
       },
     });
   }
@@ -295,7 +371,7 @@ interface BubbleContext {
  */
 export function buildBubbleSizeExpression(
   lc: Required<LeadCentresStyleOptions>,
-  ctx: Pick<BubbleContext, 'sizeMin' | 'sizeMax'>,
+  ctx: Pick<BubbleContext, "sizeMin" | "sizeMax">,
 ): unknown {
   const { sizeField, minRadius, maxRadius, defaultRadius } = lc;
   const { sizeMin, sizeMax } = ctx;
@@ -303,11 +379,15 @@ export function buildBubbleSizeExpression(
   if (sizeMin >= sizeMax) return defaultRadius;
 
   return [
-    'interpolate', ['linear'],
-    ['coalesce', ['to-number', ['get', sizeField], null], -1],
-    -1, defaultRadius,
-    sizeMin, minRadius,
-    sizeMax, maxRadius,
+    "interpolate",
+    ["linear"],
+    ["coalesce", ["to-number", ["get", sizeField], null], -1],
+    -1,
+    defaultRadius,
+    sizeMin,
+    minRadius,
+    sizeMax,
+    maxRadius,
   ];
 }
 
@@ -318,16 +398,18 @@ export function buildBubbleSizeExpression(
  */
 export function buildBubbleColorExpression(
   lc: Required<LeadCentresStyleOptions>,
-  ctx: Pick<BubbleContext, 'colorMin' | 'colorMax'>,
+  ctx: Pick<BubbleContext, "colorMin" | "colorMax">,
 ): unknown {
   const { colorMode, colorField, colorFallback } = lc;
 
-  if (colorMode === 'categorical') {
-    const entries = Object.entries(lc.colorByCategory ?? {}).filter(([k, v]) => k && v);
+  if (colorMode === "categorical") {
+    const entries = Object.entries(lc.colorByCategory ?? {}).filter(
+      ([k, v]) => k && v,
+    );
     if (!entries.length) return colorFallback;
     return [
-      'match',
-      ['coalesce', ['to-string', ['get', colorField]], ''],
+      "match",
+      ["coalesce", ["to-string", ["get", colorField]], ""],
       ...entries.flatMap(([cat, col]) => [cat, col]),
       colorFallback,
     ];
@@ -335,9 +417,10 @@ export function buildBubbleColorExpression(
 
   // Continuous mode
   const { colorMin, colorMax } = ctx;
-  const stops = lc.colorScale ?? ['#2166ac', '#f7f7f7', '#d6604d'];
+  const stops = lc.colorScale ?? ["#2166ac", "#f7f7f7", "#d6604d"];
 
-  if (colorMin >= colorMax || stops.length < 2) return stops[0] ?? colorFallback;
+  if (colorMin >= colorMax || stops.length < 2)
+    return stops[0] ?? colorFallback;
 
   const range = colorMax - colorMin;
   const interpolateArgs: unknown[] = [];
@@ -346,8 +429,9 @@ export function buildBubbleColorExpression(
   });
 
   return [
-    'interpolate', ['linear'],
-    ['coalesce', ['to-number', ['get', colorField], null], colorMin],
+    "interpolate",
+    ["linear"],
+    ["coalesce", ["to-number", ["get", colorField], null], colorMin],
     ...interpolateArgs,
   ];
 }
@@ -364,27 +448,40 @@ export function addOrUpdateLeadCentresLayer(
   const color = buildBubbleColorExpression(lc, ctx) as any;
 
   if (map.getLayer(LEAD_CENTRES_LAYER_ID)) {
-    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-radius', radius);
-    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-color', color);
-    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-stroke-color', lc.strokeColor ?? '#ffffff');
-    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-stroke-width', lc.strokeWidth ?? 2);
-    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-opacity', lc.opacity ?? 0.85);
+    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, "circle-radius", radius);
+    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, "circle-color", color);
+    map.setPaintProperty(
+      LEAD_CENTRES_LAYER_ID,
+      "circle-stroke-color",
+      lc.strokeColor ?? "#ffffff",
+    );
+    map.setPaintProperty(
+      LEAD_CENTRES_LAYER_ID,
+      "circle-stroke-width",
+      lc.strokeWidth ?? 2,
+    );
+    map.setPaintProperty(
+      LEAD_CENTRES_LAYER_ID,
+      "circle-opacity",
+      lc.opacity ?? 0.85,
+    );
   } else {
     map.addLayer({
       id: LEAD_CENTRES_LAYER_ID,
-      type: 'circle',
+      type: "circle",
       source: LEAD_CENTRES_SOURCE_ID,
       paint: {
-        'circle-radius': radius,
-        'circle-color': color,
-        'circle-stroke-color': lc.strokeColor ?? '#ffffff',
-        'circle-stroke-width': lc.strokeWidth ?? 2,
-        'circle-opacity': lc.opacity ?? 0.85,
+        "circle-radius": radius,
+        "circle-color": color,
+        "circle-stroke-color": lc.strokeColor ?? "#ffffff",
+        "circle-stroke-width": lc.strokeWidth ?? 2,
+        "circle-opacity": lc.opacity ?? 0.85,
       },
     });
   }
 }
 
 export function removeLeadCentresLayer(map: MaplibreMap): void {
-  if (map.getLayer(LEAD_CENTRES_LAYER_ID)) map.removeLayer(LEAD_CENTRES_LAYER_ID);
+  if (map.getLayer(LEAD_CENTRES_LAYER_ID))
+    map.removeLayer(LEAD_CENTRES_LAYER_ID);
 }

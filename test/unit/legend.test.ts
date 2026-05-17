@@ -97,4 +97,17 @@ describe('getLegendRows', () => {
     expect(lhb).toBeDefined();
     expect(lhb?.isEnabled).toBe(false);
   });
+
+  it('returns no rows for channel_islands (no applicable overlays)', () => {
+    const ci = createInitialState('channel_islands', '2021');
+
+    const rows = getLegendRows(ci, {
+      localAuthority: true,
+      nhser: true,
+      icb: true,
+      lhb: true,
+    });
+
+    expect(rows).toHaveLength(0);
+  });
 });
