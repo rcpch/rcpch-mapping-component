@@ -10,6 +10,8 @@ import type {
   PatientLayerOptions,
   LeadCentreInput,
   LeadCentreOptions,
+  LeadCentreBubbleInput,
+  LeadCentresOptions,
 } from '../types/public';
 import { createInitialState } from './state';
 import { resolveEffectiveEra, willEraBeOverridden } from './resolver';
@@ -17,6 +19,8 @@ import {
   addOrUpdateChoroplethSources,
   addOrUpdatePatientsSource,
   addOrUpdateLeadCentreSource,
+  addOrUpdateLeadCentresSource,
+  removeLeadCentresSource,
   PATIENTS_SOURCE_ID,
   LEAD_CENTRE_SOURCE_ID,
 } from '../map/sources';
@@ -29,14 +33,17 @@ import {
   removePatientsLayer,
   addOrUpdateLeadCentreLayer,
   removeLeadCentreLayer,
+  addOrUpdateLeadCentresLayer,
+  removeLeadCentresLayer,
 } from '../map/layers';
 import {
   attachChoroplethInteraction,
   attachPatientInteraction,
   attachLeadCentreInteraction,
+  attachLeadCentresInteraction,
 } from '../map/popups';
 import { normalizePatientInput } from '../adapters/patientInput';
-import { normalizeLeadCentreInput } from '../overlays/leadCentre';
+import { normalizeLeadCentreInput, normalizeLeadCentresInput } from '../overlays/leadCentre';
 import {
   addOrUpdateLocalAuthorityOverlay,
   hideLocalAuthorityOverlay,
@@ -49,7 +56,7 @@ import {
   hideIcbOverlay,
   hideLhbOverlay,
 } from '../overlays/healthBoundaries';
-import { createLegendControl, type LegendController } from '../map/legend';
+import { createLegendControl, updateBubbleLegendContext, type LegendController } from '../map/legend';
 import { mergeStyle, DEFAULT_STYLE } from '../map/styles';
 import { logger } from '../utils/logging';
 
@@ -142,9 +149,14 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   let mapLoaded = false;
   let pendingPatientFeatures: Feature<Point>[] | null = null;
   let pendingLeadCentreFeature: Feature<Point> | null = null;
+  let pendingLeadCentresFeatures: Feature<Point>[] | null = null;
   let pendingFitToData: { zoom?: number; padding?: number } | null = null;
   let patientInteractionAttached = false;
   let leadCentreInteractionAttached = false;
+  let leadCentresInteractionAttached = false;
+
+  // ── Bubble context (auto-computed from data, drives expressions + legend) ────
+  let bubbleCtx = { sizeMin: 0, sizeMax: 0, colorMin: 0, colorMax: 0 };
 
   // ── Stored lead centre coordinate for fitToData() ───────────────────────────
   let storedLeadCentreCoord: [number, number] | null = null;
@@ -304,6 +316,19 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       pendingLeadCentreFeature = null;
     }
 
+    if (pendingLeadCentresFeatures) {
+      addOrUpdateLeadCentresSource(map, pendingLeadCentresFeatures);
+      addOrUpdateLeadCentresLayer(map, resolvedStyle, bubbleCtx);
+      if (!leadCentresInteractionAttached) {
+        attachLeadCentresInteraction(map, popup, resolvedStyle, bubbleCtx);
+        leadCentresInteractionAttached = true;
+      }
+      state = { ...state, hasLeadCentres: true };
+      updateBubbleLegendContext(bubbleCtx);
+      legendController?.update(state, resolvedStyle);
+      pendingLeadCentresFeatures = null;
+    }
+
     if (pendingFitToData) {
       const { zoom, padding } = pendingFitToData;
       // Defer camera movement until after first idle to avoid interrupting layer rendering.
@@ -373,6 +398,9 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
         }
         if (state.hasLeadCentre) {
           addOrUpdateLeadCentreLayer(map, resolvedStyle);
+        }
+        if (state.hasLeadCentres) {
+          addOrUpdateLeadCentresLayer(map, resolvedStyle, bubbleCtx);
         }
         legendController?.update(state, resolvedStyle);
       }
@@ -450,6 +478,65 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       removeLeadCentreLayer(map);
       if (map.getSource(LEAD_CENTRE_SOURCE_ID)) map.removeSource(LEAD_CENTRE_SOURCE_ID);
       state = { ...state, hasLeadCentre: false };
+    },
+
+    setLeadCentres(data: LeadCentreBubbleInput[], centresOptions?: LeadCentresOptions) {
+      const features = normalizeLeadCentresInput(data, centresOptions, options.onWarning);
+
+      // Auto-compute size and colour min/max from the resolved features
+      const lc = resolvedStyle.leadCentres;
+      const sizeField = lc.sizeField ?? 'size';
+      const colorField = lc.colorField ?? 'color_value';
+
+      let sizeMin = Infinity;
+      let sizeMax = -Infinity;
+      let colorMin = Infinity;
+      let colorMax = -Infinity;
+
+      for (const f of features) {
+        const sv = f.properties?.[sizeField];
+        const cv = f.properties?.[colorField];
+        if (typeof sv === 'number' && Number.isFinite(sv)) {
+          if (sv < sizeMin) sizeMin = sv;
+          if (sv > sizeMax) sizeMax = sv;
+        }
+        if (typeof cv === 'number' && Number.isFinite(cv)) {
+          if (cv < colorMin) colorMin = cv;
+          if (cv > colorMax) colorMax = cv;
+        }
+      }
+
+      // Fall back to 0/1 ranges when no numeric data present
+      bubbleCtx = {
+        sizeMin: Number.isFinite(sizeMin) ? sizeMin : 0,
+        sizeMax: Number.isFinite(sizeMax) ? sizeMax : 1,
+        colorMin: Number.isFinite(colorMin) ? colorMin : 0,
+        colorMax: Number.isFinite(colorMax) ? colorMax : 1,
+      };
+
+      if (!mapLoaded) {
+        pendingLeadCentresFeatures = features;
+        return;
+      }
+
+      addOrUpdateLeadCentresSource(map, features);
+      addOrUpdateLeadCentresLayer(map, resolvedStyle, bubbleCtx);
+      if (!leadCentresInteractionAttached) {
+        attachLeadCentresInteraction(map, popup, resolvedStyle, bubbleCtx);
+        leadCentresInteractionAttached = true;
+      }
+      state = { ...state, hasLeadCentres: true };
+      updateBubbleLegendContext(bubbleCtx);
+      legendController?.update(state, resolvedStyle);
+    },
+
+    clearLeadCentres() {
+      pendingLeadCentresFeatures = null;
+      if (!mapLoaded) return;
+      removeLeadCentresLayer(map);
+      removeLeadCentresSource(map);
+      state = { ...state, hasLeadCentres: false };
+      legendController?.update(state, resolvedStyle);
     },
 
     getState() {

@@ -3,6 +3,19 @@ import { getDecileColors } from './styles';
 
 type OverlayKey = keyof ImdMapState['overlays'];
 
+interface BubbleLegendContext {
+  sizeMin: number;
+  sizeMax: number;
+  colorMin: number;
+  colorMax: number;
+}
+
+let bubbleLegendContext: BubbleLegendContext = { sizeMin: 0, sizeMax: 0, colorMin: 0, colorMax: 0 };
+
+export function updateBubbleLegendContext(ctx: BubbleLegendContext): void {
+  bubbleLegendContext = ctx;
+}
+
 interface LegendRow {
   key: OverlayKey;
   label: string;
@@ -337,6 +350,128 @@ export function createLegendControl(input: CreateLegendInput): LegendController 
     scale.appendChild(ramp);
     scale.appendChild(scaleTicks);
     keySection.appendChild(scale);
+
+    // Bubble map legend — shown only when lead centres (plural) are active
+    if (currentState.hasLeadCentres) {
+      renderBubbleLegend(keySection);
+    }
+  }
+
+  function renderBubbleLegend(container: HTMLElement): void {
+    const lc = currentStyle.leadCentres;
+    const textColor = currentStyle.legend?.textColor ?? '#0d0d58';
+    const borderColor = currentStyle.legend?.borderColor ?? '#d8dde6';
+
+    const section = document.createElement('div');
+    section.style.marginTop = '10px';
+    section.style.paddingTop = '8px';
+    section.style.borderTop = `1px solid ${borderColor}`;
+
+    // ── Bubble size scale ─────────────────────────────────────────────────────
+    const sizeTitle = document.createElement('div');
+    sizeTitle.textContent = lc.sizeLabel ?? 'Count';
+    sizeTitle.style.fontWeight = '600';
+    sizeTitle.style.marginBottom = '6px';
+    section.appendChild(sizeTitle);
+
+    const { sizeMin, sizeMax, colorMin, colorMax } = bubbleLegendContext;
+    const minR = lc.minRadius ?? 8;
+    const maxR = lc.maxRadius ?? 40;
+    const midR = Math.round((minR + maxR) / 2);
+    const midValue = Math.round((sizeMin + sizeMax) / 2);
+
+    const bubbleRow = document.createElement('div');
+    bubbleRow.style.display = 'flex';
+    bubbleRow.style.alignItems = 'flex-end';
+    bubbleRow.style.gap = '12px';
+    bubbleRow.style.marginBottom = '4px';
+
+    for (const [r, val] of [[minR, sizeMin], [midR, midValue], [maxR, sizeMax]] as [number, number][]) {
+      const wrap = document.createElement('div');
+      wrap.style.display = 'flex';
+      wrap.style.flexDirection = 'column';
+      wrap.style.alignItems = 'center';
+      wrap.style.gap = '3px';
+
+      const circle = document.createElement('span');
+      circle.style.display = 'inline-block';
+      circle.style.width = `${r * 2}px`;
+      circle.style.height = `${r * 2}px`;
+      circle.style.borderRadius = '50%';
+      circle.style.background = textColor;
+      circle.style.opacity = '0.4';
+      circle.style.border = `2px solid ${textColor}`;
+
+      const label = document.createElement('span');
+      label.textContent = String(val);
+      label.style.fontSize = '10px';
+
+      wrap.appendChild(circle);
+      wrap.appendChild(label);
+      bubbleRow.appendChild(wrap);
+    }
+    section.appendChild(bubbleRow);
+
+    // ── Colour scale ──────────────────────────────────────────────────────────
+    const colorTitle = document.createElement('div');
+    colorTitle.textContent = lc.colorLabel ?? 'Value';
+    colorTitle.style.fontWeight = '600';
+    colorTitle.style.marginTop = '8px';
+    colorTitle.style.marginBottom = '4px';
+    section.appendChild(colorTitle);
+
+    if (lc.colorMode === 'categorical' && Object.keys(lc.colorByCategory ?? {}).length) {
+      // Categorical: colour swatches
+      for (const [cat, color] of Object.entries(lc.colorByCategory ?? {})) {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '6px';
+        row.style.padding = '1px 0';
+
+        const swatch = document.createElement('span');
+        swatch.style.display = 'inline-block';
+        swatch.style.width = '12px';
+        swatch.style.height = '12px';
+        swatch.style.borderRadius = '50%';
+        swatch.style.background = color;
+        swatch.style.flexShrink = '0';
+
+        // Find label from breakdownFields if available
+        const bdf = lc.breakdownFields?.find((bf) => bf.field.includes(cat) || bf.label.toLowerCase().includes(cat));
+        const displayLabel = bdf ? bdf.label : cat;
+
+        const labelEl = document.createElement('span');
+        labelEl.textContent = displayLabel;
+
+        row.appendChild(swatch);
+        row.appendChild(labelEl);
+        section.appendChild(row);
+      }
+    } else {
+      // Continuous: gradient bar
+      const stops = lc.colorScale ?? ['#2166ac', '#f7f7f7', '#d6604d'];
+      const gradient = stops.join(', ');
+      const colorUnit = lc.colorUnit ?? '';
+
+      const bar = document.createElement('div');
+      bar.style.height = '10px';
+      bar.style.borderRadius = '3px';
+      bar.style.background = `linear-gradient(to right, ${gradient})`;
+      bar.style.marginBottom = '2px';
+
+      const ticks = document.createElement('div');
+      ticks.style.display = 'flex';
+      ticks.style.justifyContent = 'space-between';
+      ticks.style.fontSize = '10px';
+      ticks.style.opacity = '0.8';
+      ticks.innerHTML = `<span>${colorMin}${colorUnit ? ' ' + colorUnit : ''}</span><span>${colorMax}${colorUnit ? ' ' + colorUnit : ''}</span>`;
+
+      section.appendChild(bar);
+      section.appendChild(ticks);
+    }
+
+    container.appendChild(section);
   }
 
   function resolveBoundaryColor(

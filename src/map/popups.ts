@@ -10,6 +10,7 @@ import {
   ALL_CHOROPLETH_LAYER_IDS,
   PATIENTS_LAYER_ID,
   LEAD_CENTRE_LAYER_ID,
+  LEAD_CENTRES_LAYER_ID,
 } from './layers';
 import { getFeatureProperty } from '../utils/properties';
 
@@ -310,6 +311,154 @@ export function attachLeadCentreInteraction(
   });
 
   map.on('mouseleave', LEAD_CENTRE_LAYER_ID, () => {
+    map.getCanvas().style.cursor = '';
+    popup.remove();
+  });
+}
+
+// ── Lead-centres (plural) bubble tooltip ─────────────────────────────────────
+
+interface LeadCentresBubbleContext {
+  sizeMin: number;
+  sizeMax: number;
+  colorMin: number;
+  colorMax: number;
+}
+
+function buildBreakdownBarsHtml(
+  properties: Record<string, unknown>,
+  breakdownFields: Required<MapStyleOptions>['leadCentres']['breakdownFields'],
+  textColor: string,
+): string {
+  if (!breakdownFields?.length) return '';
+
+  const rows = breakdownFields.map(({ field, label, color }) => {
+    const raw = properties[field];
+    const value = typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
+    const pct = value !== null ? Math.min(100, Math.max(0, value)) : 0;
+    const displayValue = value !== null ? `${value}%` : '–';
+
+    return `<div style="margin-top:4px;">
+  <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:1px;">
+    <span>${label}</span><span>${displayValue}</span>
+  </div>
+  <div style="background:rgba(255,255,255,0.2);border-radius:2px;height:6px;overflow:hidden;">
+    <div style="background:${color};width:${pct}%;height:100%;border-radius:2px;"></div>
+  </div>
+</div>`;
+  });
+
+  return `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.3);padding-top:6px;color:${textColor};">${rows.join('')}</div>`;
+}
+
+function buildContinuousPositionBarHtml(
+  value: number,
+  colorMin: number,
+  colorMax: number,
+  colorScale: string[],
+  colorUnit: string,
+): string {
+  const range = colorMax - colorMin;
+  const pct = range > 0 ? Math.min(100, Math.max(0, ((value - colorMin) / range) * 100)) : 50;
+  const gradient = colorScale.join(', ');
+
+  return `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.3);padding-top:6px;">
+  <div style="font-size:10px;margin-bottom:3px;opacity:0.8;">Range across centres</div>
+  <div style="position:relative;height:10px;border-radius:3px;background:linear-gradient(to right,${gradient});margin-bottom:2px;">
+    <div style="position:absolute;top:-2px;left:calc(${pct}% - 4px);width:8px;height:14px;background:#fff;border-radius:2px;border:1px solid rgba(0,0,0,0.3);"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:10px;opacity:0.75;">
+    <span>${colorMin}${colorUnit ? ' ' + colorUnit : ''}</span>
+    <span>${colorMax}${colorUnit ? ' ' + colorUnit : ''}</span>
+  </div>
+</div>`;
+}
+
+export function buildLeadCentresBubbleTooltipHtml(
+  properties: Record<string, unknown> | null | undefined,
+  style: Required<MapStyleOptions>,
+  ctx: LeadCentresBubbleContext,
+): string {
+  const t = style.tooltip;
+  const lc = style.leadCentres;
+  const bg = t.backgroundColor ?? '#0d0d58';
+  const color = t.textColor ?? '#ffffff';
+  const radius = t.borderRadius ?? 4;
+
+  const label = String(properties?.label ?? 'Lead centre');
+  const sizeRaw = properties?.[lc.sizeField ?? 'size'];
+  const colorRaw = properties?.[lc.colorField ?? 'color_value'];
+
+  const sizeValue = typeof sizeRaw === 'number' && Number.isFinite(sizeRaw)
+    ? sizeRaw.toLocaleString()
+    : '–';
+  const colorValue = typeof colorRaw === 'number' && Number.isFinite(colorRaw)
+    ? colorRaw.toLocaleString()
+    : typeof colorRaw === 'string' ? colorRaw : '–';
+
+  const sizeLabel = lc.sizeLabel ?? 'Count';
+  const colorLabel = lc.colorLabel ?? 'Value';
+  const colorUnit = lc.colorUnit ?? '';
+
+  let colorRow = `<span>${colorLabel}: <strong>${colorValue}</strong>${colorUnit ? ' ' + colorUnit : ''}</span><br/>`;
+
+  let extraHtml = '';
+  if (lc.colorMode === 'categorical' && lc.breakdownFields?.length) {
+    extraHtml = buildBreakdownBarsHtml(properties ?? {}, lc.breakdownFields, color);
+  } else if (lc.colorMode !== 'categorical') {
+    const numericColorValue = typeof colorRaw === 'number' && Number.isFinite(colorRaw) ? colorRaw : null;
+    if (numericColorValue !== null && ctx.colorMin < ctx.colorMax) {
+      extraHtml = buildContinuousPositionBarHtml(
+        numericColorValue,
+        ctx.colorMin,
+        ctx.colorMax,
+        lc.colorScale ?? ['#2166ac', '#f7f7f7', '#d6604d'],
+        colorUnit,
+      );
+    }
+  }
+
+  // In categorical mode without breakdown, show category swatch
+  if (lc.colorMode === 'categorical' && !lc.breakdownFields?.length) {
+    const catColor = typeof colorRaw === 'string'
+      ? (lc.colorByCategory?.[colorRaw] ?? lc.colorFallback ?? '#aaaaaa')
+      : (lc.colorFallback ?? '#aaaaaa');
+    colorRow = `<span style="display:inline-flex;align-items:center;gap:5px;">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${catColor};flex-shrink:0;"></span>
+      ${colorLabel}: <strong>${colorValue}</strong>
+    </span><br/>`;
+  }
+
+  return `<div style="background:${bg};color:${color};padding:8px 12px;border-radius:${radius}px;font-size:13px;line-height:1.6;font-family:sans-serif;min-width:180px;">
+  <strong style="display:block;margin-bottom:4px;">${label}</strong>
+  <span>${sizeLabel}: <strong>${sizeValue}</strong></span><br/>
+  ${colorRow}${extraHtml}
+</div>`;
+}
+
+export function attachLeadCentresInteraction(
+  map: MaplibreMap,
+  popup: Popup,
+  style: Required<MapStyleOptions>,
+  ctx: LeadCentresBubbleContext,
+): void {
+  map.on('mousemove', LEAD_CENTRES_LAYER_ID, (e: MapMouseEvent) => {
+    const features = map.queryRenderedFeatures(e.point, { layers: [LEAD_CENTRES_LAYER_ID] });
+    if (!features.length) return;
+
+    const feature = features[0];
+    map.getCanvas().style.cursor = 'pointer';
+    popup
+      .setLngLat(e.lngLat)
+      .setHTML(buildLeadCentresBubbleTooltipHtml(
+        feature.properties as Record<string, unknown>,
+        style,
+        ctx,
+      ))
+      .addTo(map);
+  });
+
+  map.on('mouseleave', LEAD_CENTRES_LAYER_ID, () => {
     map.getCanvas().style.cursor = '';
     popup.remove();
   });

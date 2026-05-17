@@ -52,6 +52,64 @@ export interface LeadCentreStyleOptions {
   strokeWidth?: number;
 }
 
+// ── Lead centres (plural) bubble map ─────────────────────────────────────────
+
+export interface LeadCentresBreakdownField {
+  /** Property name on the feature carrying a numeric value (proportion, count, etc.). */
+  field: string;
+  /** Human-readable label shown in the tooltip breakdown bar. */
+  label: string;
+  /** Hex color for the bar fill. */
+  color: string;
+}
+
+export interface LeadCentresStyleOptions {
+  /** Property name driving bubble radius. Default: 'size'. */
+  sizeField?: string;
+  /** Human-readable label for the size dimension (legend + tooltip). Default: 'Count'. */
+  sizeLabel?: string;
+  /** Minimum rendered radius in pixels. Default: 8. */
+  minRadius?: number;
+  /** Maximum rendered radius in pixels. Default: 40. */
+  maxRadius?: number;
+  /** Radius used when sizeField value is absent or invalid. Default: 12. */
+  defaultRadius?: number;
+
+  /** Property name driving bubble colour. Default: 'color_value'. */
+  colorField?: string;
+  /** Human-readable label for the colour dimension (legend + tooltip). Default: 'Value'. */
+  colorLabel?: string;
+
+  /**
+   * 'continuous' (default): colorField is numeric; colour interpolates linearly across
+   *   the auto-computed [min, max] range via colorScale.
+   * 'categorical': colorField is a string; each distinct value maps to a fixed colour
+   *   via colorByCategory. Encodes a per-centre classification (e.g. centre type,
+   *   dominant diabetes type). Not suitable for patient population breakdowns.
+   */
+  colorMode?: 'continuous' | 'categorical';
+
+  /** Continuous mode: unit string appended after colour values in the tooltip. Default: ''. */
+  colorUnit?: string;
+  /** Continuous mode: hex colour stops applied linearly across [min, max]. Default: blue→white→red. */
+  colorScale?: string[];
+
+  /** Categorical mode: map of category string value → hex colour. */
+  colorByCategory?: Record<string, string>;
+  /**
+   * Categorical mode: fields to render as proportional breakdown bars in the tooltip.
+   * Values should be pre-computed server-side (proportions, percentages, or counts).
+   */
+  breakdownFields?: LeadCentresBreakdownField[];
+
+  /** Fallback colour for missing or invalid colorField values. Default: '#aaaaaa'. */
+  colorFallback?: string;
+
+  strokeColor?: string;
+  strokeWidth?: number;
+  opacity?: number;
+}
+
 export interface TooltipStyleOptions {
   backgroundColor?: string;
   textColor?: string;
@@ -104,6 +162,7 @@ export interface MapStyleOptions {
   boundaries?: BoundaryStyleOptions;
   patients?: PatientStyleOptions;
   leadCentre?: LeadCentreStyleOptions;
+  leadCentres?: LeadCentresStyleOptions;
   tooltip?: TooltipStyleOptions;
   legend?: LegendStyleOptions;
 }
@@ -117,6 +176,7 @@ export interface ImdMapState {
   effectiveEra: Era;
   hasPatients: boolean;
   hasLeadCentre: boolean;
+  hasLeadCentres: boolean;
   overlays: {
     localAuthority: boolean;
     nhser: boolean;
@@ -187,7 +247,7 @@ export interface PatientLayerOptions {
   strict?: boolean;
 }
 
-// ── Lead centre overlay ───────────────────────────────────────────────────────
+// ── Lead centre overlay (singular) ───────────────────────────────────────────
 
 export interface LeadCentreInput {
   lat?: number;
@@ -204,6 +264,29 @@ export interface LeadCentreInput {
 
 export interface LeadCentreOptions {
   label?: string;
+}
+
+// ── Lead centres overlay (plural — bubble map) ────────────────────────────────
+
+/**
+ * A single entry in the array passed to `setLeadCentres()`.
+ * lat/lon aliases follow the same flexible convention as LeadCentreInput.
+ * Any additional fields are passed through to the GeoJSON feature properties
+ * and are available for size/colour/breakdown rendering and tooltip templates.
+ */
+export interface LeadCentreBubbleInput {
+  lat?: number;
+  latitude?: number;
+  lon?: number;
+  lng?: number;
+  longitude?: number;
+  label?: string;
+  [key: string]: unknown;
+}
+
+export interface LeadCentresOptions {
+  /** When true, throws on the first invalid record instead of emitting a warning. */
+  strict?: boolean;
 }
 
 // ── Main options and instance ─────────────────────────────────────────────────
@@ -264,6 +347,9 @@ export interface ImdMapInstance {
   clearPatients(): void;
   setLeadCentre(data: LeadCentreInput, options?: LeadCentreOptions): void;
   clearLeadCentre(): void;
+  /** Render multiple lead centres as a proportional symbol (bubble) map. */
+  setLeadCentres(data: LeadCentreBubbleInput[], options?: LeadCentresOptions): void;
+  clearLeadCentres(): void;
   getState(): ImdMapState;
   resize(): void;
   /** Fit map to plotted patients and/or lead centre. Uses bounds + optional padding. */

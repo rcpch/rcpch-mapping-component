@@ -6,7 +6,7 @@ It complements, not replaces, the consumer-facing documentation in `README.md`.
 ## Project at a glance
 
 - Package: `@rcpch/imd-map`
-- Purpose: browser-first UK deprivation choropleth using MapLibre GL JS with optional patient, lead-centre, and administrative boundary overlays
+- Purpose: browser-first UK deprivation choropleth using MapLibre GL JS with optional patient, lead-centre, multi-lead-centre bubble map, and administrative boundary overlays
 - Primary consumer modes:
   - npm/bundler consumers via ESM build
   - script-tag / Django / HTMX consumers via self-contained UMD build
@@ -29,7 +29,7 @@ It complements, not replaces, the consumer-facing documentation in `README.md`.
 - `src/overlays/`
   - `localAuthority.ts` manages the LA boundary overlay
   - `healthBoundaries.ts` manages NHSER / ICB / LHB overlays
-  - `leadCentre.ts` normalizes lead-centre inputs
+  - `leadCentre.ts` normalizes singular lead-centre input and plural `LeadCentreBubbleInput[]` arrays
 - `src/adapters/`
   - `patientInput.ts` normalizes patient input forms into GeoJSON point features
 - `src/utils/`
@@ -39,7 +39,7 @@ It complements, not replaces, the consumer-facing documentation in `README.md`.
 - `src/types/public.ts`
   - source of truth for the public API surface and style/options types
 - `test/unit/`
-  - focused unit tests for resolver, properties, validation, patient input, styles, layers, and legend logic
+  - focused unit tests for resolver, properties, validation, patient input, styles, layers, legend logic, and lead-centres bubble map
 - `examples/`
   - standalone static HTML smoke-test pages
 
@@ -88,15 +88,15 @@ Build config lives in `tsup.config.ts`:
 
 Four UK mixed-nation tile tables exist per era, one per zoom tier:
 
-| Era | Tier | Full table | Source-layer name |
-| --- | --- | --- | --- |
-| `2011` | `z0_4` | `public.uk_master_2011_z0_4` | `uk_master_2011_z0_4` |
-| `2011` | `z5_7` | `public.uk_master_2011_z5_7` | `uk_master_2011_z5_7` |
-| `2011` | `z8_10` | `public.uk_master_2011_z8_10` | `uk_master_2011_z8_10` |
+| Era    | Tier     | Full table                     | Source-layer name       |
+| ------ | -------- | ------------------------------ | ----------------------- |
+| `2011` | `z0_4`   | `public.uk_master_2011_z0_4`   | `uk_master_2011_z0_4`   |
+| `2011` | `z5_7`   | `public.uk_master_2011_z5_7`   | `uk_master_2011_z5_7`   |
+| `2011` | `z8_10`  | `public.uk_master_2011_z8_10`  | `uk_master_2011_z8_10`  |
 | `2011` | `z11_14` | `public.uk_master_2011_z11_14` | `uk_master_2011_z11_14` |
-| `2021` | `z0_4` | `public.uk_master_2021_z0_4` | `uk_master_2021_z0_4` |
-| `2021` | `z5_7` | `public.uk_master_2021_z5_7` | `uk_master_2021_z5_7` |
-| `2021` | `z8_10` | `public.uk_master_2021_z8_10` | `uk_master_2021_z8_10` |
+| `2021` | `z0_4`   | `public.uk_master_2021_z0_4`   | `uk_master_2021_z0_4`   |
+| `2021` | `z5_7`   | `public.uk_master_2021_z5_7`   | `uk_master_2021_z5_7`   |
+| `2021` | `z8_10`  | `public.uk_master_2021_z8_10`  | `uk_master_2021_z8_10`  |
 | `2021` | `z11_14` | `public.uk_master_2021_z11_14` | `uk_master_2021_z11_14` |
 
 Tile URL format:
@@ -137,24 +137,24 @@ All four sources are added together; layer `minzoom`/`maxzoom` control switching
 
 Overlay tile views are zoom-tiered, matching choropleth switching:
 
-| Overlay | Tier | Full table | Source-layer name |
-| --- | --- | --- | --- |
-| Local authority | `z0_4` | `public.la_tiles_z0_4` | `public.la_tiles_z0_4` |
-| Local authority | `z5_7` | `public.la_tiles_z5_7` | `public.la_tiles_z5_7` |
-| Local authority | `z8_10` | `public.la_tiles_z8_10` | `public.la_tiles_z8_10` |
-| Local authority | `z11_14` | `public.la_tiles_z11_14` | `public.la_tiles_z11_14` |
-| NHS England regions | `z0_4` | `public.nhser_tiles_2021_z0_4` | `public.nhser_tiles_2021_z0_4` |
-| NHS England regions | `z5_7` | `public.nhser_tiles_2021_z5_7` | `public.nhser_tiles_2021_z5_7` |
-| NHS England regions | `z8_10` | `public.nhser_tiles_2021_z8_10` | `public.nhser_tiles_2021_z8_10` |
+| Overlay             | Tier     | Full table                       | Source-layer name                |
+| ------------------- | -------- | -------------------------------- | -------------------------------- |
+| Local authority     | `z0_4`   | `public.la_tiles_z0_4`           | `public.la_tiles_z0_4`           |
+| Local authority     | `z5_7`   | `public.la_tiles_z5_7`           | `public.la_tiles_z5_7`           |
+| Local authority     | `z8_10`  | `public.la_tiles_z8_10`          | `public.la_tiles_z8_10`          |
+| Local authority     | `z11_14` | `public.la_tiles_z11_14`         | `public.la_tiles_z11_14`         |
+| NHS England regions | `z0_4`   | `public.nhser_tiles_2021_z0_4`   | `public.nhser_tiles_2021_z0_4`   |
+| NHS England regions | `z5_7`   | `public.nhser_tiles_2021_z5_7`   | `public.nhser_tiles_2021_z5_7`   |
+| NHS England regions | `z8_10`  | `public.nhser_tiles_2021_z8_10`  | `public.nhser_tiles_2021_z8_10`  |
 | NHS England regions | `z11_14` | `public.nhser_tiles_2021_z11_14` | `public.nhser_tiles_2021_z11_14` |
-| ICBs | `z0_4` | `public.icb_tiles_2023_z0_4` | `public.icb_tiles_2023_z0_4` |
-| ICBs | `z5_7` | `public.icb_tiles_2023_z5_7` | `public.icb_tiles_2023_z5_7` |
-| ICBs | `z8_10` | `public.icb_tiles_2023_z8_10` | `public.icb_tiles_2023_z8_10` |
-| ICBs | `z11_14` | `public.icb_tiles_2023_z11_14` | `public.icb_tiles_2023_z11_14` |
-| Local health boards | `z0_4` | `public.lhb_tiles_2022_z0_4` | `public.lhb_tiles_2022_z0_4` |
-| Local health boards | `z5_7` | `public.lhb_tiles_2022_z5_7` | `public.lhb_tiles_2022_z5_7` |
-| Local health boards | `z8_10` | `public.lhb_tiles_2022_z8_10` | `public.lhb_tiles_2022_z8_10` |
-| Local health boards | `z11_14` | `public.lhb_tiles_2022_z11_14` | `public.lhb_tiles_2022_z11_14` |
+| ICBs                | `z0_4`   | `public.icb_tiles_2023_z0_4`     | `public.icb_tiles_2023_z0_4`     |
+| ICBs                | `z5_7`   | `public.icb_tiles_2023_z5_7`     | `public.icb_tiles_2023_z5_7`     |
+| ICBs                | `z8_10`  | `public.icb_tiles_2023_z8_10`    | `public.icb_tiles_2023_z8_10`    |
+| ICBs                | `z11_14` | `public.icb_tiles_2023_z11_14`   | `public.icb_tiles_2023_z11_14`   |
+| Local health boards | `z0_4`   | `public.lhb_tiles_2022_z0_4`     | `public.lhb_tiles_2022_z0_4`     |
+| Local health boards | `z5_7`   | `public.lhb_tiles_2022_z5_7`     | `public.lhb_tiles_2022_z5_7`     |
+| Local health boards | `z8_10`  | `public.lhb_tiles_2022_z8_10`    | `public.lhb_tiles_2022_z8_10`    |
+| Local health boards | `z11_14` | `public.lhb_tiles_2022_z11_14`   | `public.lhb_tiles_2022_z11_14`   |
 
 Overlay builders keep tile URL table id and `source-layer` identical to avoid rendering mismatches.
 Choropleth tiles continue to use `uk_master_<era>_<tier>` as `source-layer`.
@@ -182,7 +182,17 @@ Older casing variants and legacy names are resolved via `src/utils/properties.ts
 - `fitToData()` fits to patients + lead centre with optional padding
 - `setPatients(data, { strict: true })` throws on first invalid record
 - `setOverlayVisibility()` is the public boundary overlay toggle surface
+- `setLeadCentre(data)` (singular) — unchanged single-centre scatter companion; source/layer ID `rcpch-imd-lead-centre`
+- `setLeadCentres(data[], options?)` — multi-centre proportional symbol (bubble) map:
+  - `data` is an array of `LeadCentreBubbleInput` (flexible lat/lon aliases + any extra fields)
+  - `style.leadCentres.sizeField` drives bubble radius (linear interpolation, auto-ranged)
+  - `style.leadCentres.colorField` + `colorMode` drive colour:
+    - `'continuous'`: numeric field → linear gradient across `colorScale`
+    - `'categorical'`: string field → `colorByCategory` palette; `breakdownFields` adds tooltip bars
+  - min/max for both dimensions are auto-computed from data at call time
+  - `clearLeadCentres()` removes the layer and source
 - Legend behavior is configurable via create options and `style.legend`
+- `ImdMapState.hasLeadCentres` reflects whether the bubble layer is active
 
 ## Testing map behavior
 

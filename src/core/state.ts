@@ -8,6 +8,7 @@ export function createInitialState(nation: Nation = 'all', era: Era = '2021'): I
     effectiveEra: resolveEffectiveEra(nation, era),
     hasPatients: false,
     hasLeadCentre: false,
+    hasLeadCentres: false,
     overlays: {
       localAuthority: false,
       nhser: false,

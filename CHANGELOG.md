@@ -8,6 +8,28 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Multi-lead-centre bubble map** (`setLeadCentres()` / `clearLeadCentres()`) — closes issue #6.
+  - Renders an array of lead centres as proportional symbol (bubble) circles: radius encodes a
+    size metric (e.g. patient count), colour encodes a second metric (e.g. median HbA1c).
+  - Two colour modes via `style.leadCentres.colorMode`:
+    - `'continuous'` (default): numeric `colorField` linearly interpolated across a configurable
+      colour scale (default blue → white → red); min/max auto-computed from data.
+    - `'categorical'`: string `colorField` mapped to discrete colours via `colorByCategory`;
+      tooltip shows a proportional breakdown bar chart for any `breakdownFields` supplied.
+  - Hover tooltip shows centre label, size value, colour value, and either a mini gradient
+    position bar (continuous) or per-category breakdown bars (categorical).
+  - Legend gains a bubble size scale (3 representative circles) and a colour scale bar or
+    category swatch list, shown only when `setLeadCentres()` has been called.
+  - All field names, labels, and units are consumer-configurable via `style.leadCentres`.
+  - Uses separate MapLibre source (`rcpch-imd-lead-centres`) and layer
+    (`rcpch-imd-lead-centres`) from the existing singular `setLeadCentre()` — fully backward compatible.
+  - Invalid entries are skipped with `onWarning` callbacks or throw in `strict` mode.
+- Added `hasLeadCentres: boolean` to `ImdMapState`.
+- Added `LeadCentreBubbleInput`, `LeadCentresStyleOptions`, `LeadCentresOptions`,
+  `LeadCentresBreakdownField` to the public type surface.
+
 ## [0.4.0] — 2026-05-16
 
 ### Added
@@ -53,7 +75,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Switched local authority boundary overlay to zoom-tiered pg_tileserv tables (`public.la_tiles_z0_4`, `public.la_tiles_z5_7`, `public.la_tiles_z8_10`, `public.la_tiles_z11_14`) with tier-matched layer zoom windows.
-- Switched health boundary overlays to zoom-tiered pg_tileserv tables for NHS England regions (`public.nhser_tiles_2021_*`), ICBs (`public.icb_tiles_2023_*`), and Welsh LHBs (`public.lhb_tiles_2022_*`).
+- Switched health boundary overlays to zoom-tiered pg*tileserv tables for NHS England regions (`public.nhser_tiles_2021*_`), ICBs (`public.icb*tiles_2023*_`), and Welsh LHBs (`public.lhb*tiles_2022*\*`).
 - Corrected overlay `source-layer` usage to match deployed overlay vector tiles by using schema-qualified layer names (for example `public.la_tiles_z5_7`) and keeping `source-layer` equal to the URL table id.
 - Updated overlay visibility handling so hide/show applies across all zoom-tier boundary layers.
 

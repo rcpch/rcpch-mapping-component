@@ -1,6 +1,6 @@
 import type { Map as MaplibreMap } from 'maplibre-gl';
-import type { Nation, Era, MapStyleOptions } from '../types/public';
-import { choroplethSourceId, PATIENTS_SOURCE_ID, LEAD_CENTRE_SOURCE_ID } from './sources';
+import type { Nation, Era, MapStyleOptions, LeadCentresStyleOptions } from '../types/public';
+import { choroplethSourceId, PATIENTS_SOURCE_ID, LEAD_CENTRE_SOURCE_ID, LEAD_CENTRES_SOURCE_ID } from './sources';
 import { getDecileColors } from './styles';
 import { ZOOM_TIERS, resolveFullTableName, resolveNationFilter } from '../core/resolver';
 import type { ZoomTier } from '../core/resolver';
@@ -22,6 +22,7 @@ export const ALL_CHOROPLETH_LAYER_IDS = ZOOM_TIERS.flatMap((t) => [
 
 export const PATIENTS_LAYER_ID = 'rcpch-imd-patients';
 export const LEAD_CENTRE_LAYER_ID = 'rcpch-imd-lead-centre';
+export const LEAD_CENTRES_LAYER_ID = 'rcpch-imd-lead-centres';
 
 // Expose a representative fill layer ID for hover/click event binding.
 // We attach mouse events to the high-zoom tier layer as it is most precise
@@ -276,4 +277,114 @@ export function addOrUpdateLeadCentreLayer(
 
 export function removeLeadCentreLayer(map: MaplibreMap): void {
   if (map.getLayer(LEAD_CENTRE_LAYER_ID)) map.removeLayer(LEAD_CENTRE_LAYER_ID);
+}
+
+// ── Lead-centres (plural) bubble layer ───────────────────────────────────────
+
+interface BubbleContext {
+  sizeMin: number;
+  sizeMax: number;
+  colorMin: number;
+  colorMax: number;
+}
+
+/**
+ * Build a MapLibre circle-radius expression that linearly interpolates the sizeField
+ * between [sizeMin → minRadius] and [sizeMax → maxRadius].
+ * Falls back to defaultRadius when the field value is absent.
+ */
+export function buildBubbleSizeExpression(
+  lc: Required<LeadCentresStyleOptions>,
+  ctx: Pick<BubbleContext, 'sizeMin' | 'sizeMax'>,
+): unknown {
+  const { sizeField, minRadius, maxRadius, defaultRadius } = lc;
+  const { sizeMin, sizeMax } = ctx;
+
+  if (sizeMin >= sizeMax) return defaultRadius;
+
+  return [
+    'interpolate', ['linear'],
+    ['coalesce', ['to-number', ['get', sizeField], null], -1],
+    -1, defaultRadius,
+    sizeMin, minRadius,
+    sizeMax, maxRadius,
+  ];
+}
+
+/**
+ * Build a MapLibre circle-color expression.
+ * Continuous mode: interpolates numeric colorField linearly across colorScale stops.
+ * Categorical mode: maps string colorField values via colorByCategory.
+ */
+export function buildBubbleColorExpression(
+  lc: Required<LeadCentresStyleOptions>,
+  ctx: Pick<BubbleContext, 'colorMin' | 'colorMax'>,
+): unknown {
+  const { colorMode, colorField, colorFallback } = lc;
+
+  if (colorMode === 'categorical') {
+    const entries = Object.entries(lc.colorByCategory ?? {}).filter(([k, v]) => k && v);
+    if (!entries.length) return colorFallback;
+    return [
+      'match',
+      ['coalesce', ['to-string', ['get', colorField]], ''],
+      ...entries.flatMap(([cat, col]) => [cat, col]),
+      colorFallback,
+    ];
+  }
+
+  // Continuous mode
+  const { colorMin, colorMax } = ctx;
+  const stops = lc.colorScale ?? ['#2166ac', '#f7f7f7', '#d6604d'];
+
+  if (colorMin >= colorMax || stops.length < 2) return stops[0] ?? colorFallback;
+
+  const range = colorMax - colorMin;
+  const interpolateArgs: unknown[] = [];
+  stops.forEach((color, i) => {
+    interpolateArgs.push(colorMin + (i / (stops.length - 1)) * range, color);
+  });
+
+  return [
+    'interpolate', ['linear'],
+    ['coalesce', ['to-number', ['get', colorField], null], colorMin],
+    ...interpolateArgs,
+  ];
+}
+
+export function addOrUpdateLeadCentresLayer(
+  map: MaplibreMap,
+  style: Required<MapStyleOptions>,
+  ctx: BubbleContext,
+): void {
+  const lc = style.leadCentres as Required<LeadCentresStyleOptions>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const radius = buildBubbleSizeExpression(lc, ctx) as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const color = buildBubbleColorExpression(lc, ctx) as any;
+
+  if (map.getLayer(LEAD_CENTRES_LAYER_ID)) {
+    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-radius', radius);
+    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-color', color);
+    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-stroke-color', lc.strokeColor ?? '#ffffff');
+    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-stroke-width', lc.strokeWidth ?? 2);
+    map.setPaintProperty(LEAD_CENTRES_LAYER_ID, 'circle-opacity', lc.opacity ?? 0.85);
+  } else {
+    map.addLayer({
+      id: LEAD_CENTRES_LAYER_ID,
+      type: 'circle',
+      source: LEAD_CENTRES_SOURCE_ID,
+      paint: {
+        'circle-radius': radius,
+        'circle-color': color,
+        'circle-stroke-color': lc.strokeColor ?? '#ffffff',
+        'circle-stroke-width': lc.strokeWidth ?? 2,
+        'circle-opacity': lc.opacity ?? 0.85,
+      },
+    });
+  }
+}
+
+export function removeLeadCentresLayer(map: MaplibreMap): void {
+  if (map.getLayer(LEAD_CENTRES_LAYER_ID)) map.removeLayer(LEAD_CENTRES_LAYER_ID);
 }

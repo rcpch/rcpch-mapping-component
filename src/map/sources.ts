@@ -19,6 +19,7 @@ export const ALL_CHOROPLETH_SOURCE_IDS = ZOOM_TIERS.map((t) => choroplethSourceI
 
 export const PATIENTS_SOURCE_ID = 'rcpch-imd-patients';
 export const LEAD_CENTRE_SOURCE_ID = 'rcpch-imd-lead-centre';
+export const LEAD_CENTRES_SOURCE_ID = 'rcpch-imd-lead-centres';
 
 // ── Choropleth sources (3 per era) ────────────────────────────────────────────
 
@@ -92,4 +93,24 @@ export function addOrUpdateLeadCentreSource(
     if (existing) map.removeSource(LEAD_CENTRE_SOURCE_ID);
     map.addSource(LEAD_CENTRE_SOURCE_ID, { type: 'geojson', data });
   }
+}
+
+// ── Lead-centres (plural) GeoJSON source ─────────────────────────────────────
+
+export function addOrUpdateLeadCentresSource(
+  map: MaplibreMap,
+  features: FeatureCollection<Point>['features'],
+): void {
+  const data: FeatureCollection<Point> = { type: 'FeatureCollection', features };
+  const existing = map.getSource(LEAD_CENTRES_SOURCE_ID);
+  if (existing instanceof GeoJSONSource) {
+    existing.setData(data);
+  } else {
+    if (existing) map.removeSource(LEAD_CENTRES_SOURCE_ID);
+    map.addSource(LEAD_CENTRES_SOURCE_ID, { type: 'geojson', data });
+  }
+}
+
+export function removeLeadCentresSource(map: MaplibreMap): void {
+  if (map.getSource(LEAD_CENTRES_SOURCE_ID)) map.removeSource(LEAD_CENTRES_SOURCE_ID);
 }
