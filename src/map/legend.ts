@@ -193,10 +193,6 @@ export function createLegendControl(
     const width = legend?.width ?? 220;
     const boxShadow = legend?.boxShadow ?? "0 6px 18px rgba(0, 0, 0, 0.12)";
 
-    root.style.maxHeight = "calc(100% - 24px)";
-    root.style.display = "flex";
-    root.style.flexDirection = "column";
-
     panel.style.background = backgroundColor;
     panel.style.color = textColor;
     panel.style.border = `1px solid ${borderColor}`;
@@ -549,6 +545,17 @@ export function createLegendControl(
     return style.boundaries.lhbWidth ?? 1;
   }
 
+  function applyMaxHeight(): void {
+    const containerHeight = input.container.getBoundingClientRect().height;
+    if (containerHeight > 0) {
+      panel.style.maxHeight = `${containerHeight - 24}px`;
+    }
+  }
+
+  const resizeObserver = new ResizeObserver(() => applyMaxHeight());
+  resizeObserver.observe(input.container);
+  applyMaxHeight();
+
   headerBtn.addEventListener("click", () => {
     collapsed = !collapsed;
     headerBtn.setAttribute("aria-expanded", String(!collapsed));
@@ -567,6 +574,7 @@ export function createLegendControl(
       renderRows();
     },
     destroy() {
+      resizeObserver.disconnect();
       root.remove();
     },
   };
