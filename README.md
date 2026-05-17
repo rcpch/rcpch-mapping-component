@@ -43,21 +43,21 @@ npm install maplibre-gl
 ```
 
 ```js
-import 'maplibre-gl/dist/maplibre-gl.css';
-import { createImdMap } from '@rcpch/imd-map';
+import "maplibre-gl/dist/maplibre-gl.css";
+import { createImdMap } from "@rcpch/imd-map";
 
 const map = createImdMap({
-  container: 'map',
-  tilesBaseUrl: 'https://your-tile-server.example.com',
-  initialNation: 'all',
+  container: "map",
+  tilesBaseUrl: "https://your-tile-server.example.com",
+  initialNation: "all",
 });
 
 map.setPatients([
-  { id: 'p1', lat: 51.5074, lon: -0.1278 },
-  { id: 'p2', lat: 53.4808, lon: -2.2426 },
+  { id: "p1", lat: 51.5074, lon: -0.1278 },
+  { id: "p2", lat: 53.4808, lon: -2.2426 },
 ]);
 
-map.setLeadCentre({ lat: 51.5202, lon: -0.1049, label: 'Lead Centre' });
+map.setLeadCentre({ lat: 51.5202, lon: -0.1049, label: "Lead Centre" });
 ```
 
 ---
@@ -69,14 +69,16 @@ The UMD bundle includes MapLibre GL. No separate script tag required.
 ```html
 <div id="map" style="height: 600px"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@rcpch/imd-map@0.3.0/dist/umd/rcpch-imd-map.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@rcpch/imd-map@0.5.0/dist/umd/rcpch-imd-map.min.js"
+        integrity="sha512-Udl5igLQTnxSJGcneRNBfS+zFpzYUcNZW2kA+dkVf/9mNpmS9numEnCaFdtWLqndBqGUJisvJ4QSYudGOK5oYg=="
+        crossorigin="anonymous"></script>
 <script>
   const map = RcpchImdMap.createImdMap({
-    container: 'map',
-    tilesBaseUrl: 'https://your-tile-server.example.com',
-    initialNation: 'all',
+    container: "map",
+    tilesBaseUrl: "https://your-tile-server.example.com",
+    initialNation: "all",
     style: {
-      tooltip: { areaLabel: 'Area', decileLabel: 'IMD decile' },
+      tooltip: { areaLabel: "Area", decileLabel: "IMD decile" },
     },
   });
 </script>
@@ -112,21 +114,18 @@ context = {
 **Django template (partial):**
 
 ```html
-{% load static %}
-
-{% if error %}
-  <div class="alert alert-danger">{{ error }}</div>
+{% load static %} {% if error %}
+<div class="alert alert-danger">{{ error }}</div>
 {% elif info %}
-  <div class="alert alert-info">{{ info }}</div>
+<div class="alert alert-info">{{ info }}</div>
 {% else %}
-  <div id="organisation-cases-map" style="width:100%;height:32rem;"></div>
-  {{ map_payload|json_script:"organisation-cases-map-payload" }}
-{% endif %}
+<div id="organisation-cases-map" style="width:100%;height:32rem;"></div>
+{{ map_payload|json_script:"organisation-cases-map-payload" }} {% endif %}
 
 <script src="{% static 'vendor/rcpch-imd-map.min.js' %}"></script>
 <script>
   (function () {
-    var el = document.getElementById('organisation-cases-map');
+    var el = document.getElementById("organisation-cases-map");
     if (!el) return;
 
     // Destroy any previous instance to prevent leaks on HTMX swaps
@@ -136,35 +135,38 @@ context = {
     }
 
     var payload = JSON.parse(
-      document.getElementById('organisation-cases-map-payload').textContent
+      document.getElementById("organisation-cases-map-payload").textContent,
     );
 
     // Django-safe literal tokens for the map library's tooltip interpolation
     var token = {
-      patientLabel: '{% templatetag openvariable %}patientLabel{% templatetag closevariable %}',
-      id: '{% templatetag openvariable %}id{% templatetag closevariable %}',
-      leadCentreLabel: '{% templatetag openvariable %}leadCentreLabel{% templatetag closevariable %}',
-      label: '{% templatetag openvariable %}label{% templatetag closevariable %}'
+      patientLabel:
+        "{% templatetag openvariable %}patientLabel{% templatetag closevariable %}",
+      id: "{% templatetag openvariable %}id{% templatetag closevariable %}",
+      leadCentreLabel:
+        "{% templatetag openvariable %}leadCentreLabel{% templatetag closevariable %}",
+      label:
+        "{% templatetag openvariable %}label{% templatetag closevariable %}",
     };
 
     var map = RcpchImdMap.createImdMap({
-      container: 'organisation-cases-map',
+      container: "organisation-cases-map",
       tilesBaseUrl: window.RCPCH_DEPRIVATION_TILES_URL,
-      initialNation: 'all',
+      initialNation: "all",
       style: {
         choropleth: { fallbackDecileColors: payload.style.decileColors },
         boundaries: { localAuthorityColor: payload.style.boundaryColor },
         tooltip: {
-          areaLabel: 'Local area',
-          patientLabel: 'Child',
-          patientTooltipText: token.patientLabel + ': ' + token.id,
-          leadCentreTooltipText: token.leadCentreLabel + ': ' + token.label,
-          backgroundColor: '#0d0d58',
-          textColor: '#ffffff',
+          areaLabel: "Local area",
+          patientLabel: "Child",
+          patientTooltipText: token.patientLabel + ": " + token.id,
+          leadCentreTooltipText: token.leadCentreLabel + ": " + token.label,
+          backgroundColor: "#0d0d58",
+          textColor: "#ffffff",
         },
       },
       onWarning: function (w) {
-        console.warn('[rcpch-imd-map]', w.code, w.message);
+        console.warn("[rcpch-imd-map]", w.code, w.message);
       },
     });
 
@@ -186,7 +188,9 @@ cp dist/umd/rcpch-imd-map.min.js /path/to/npda/project/static/vendor/
 Set `window.RCPCH_DEPRIVATION_TILES_URL` before the script runs, for example in your base template:
 
 ```html
-<script>window.RCPCH_DEPRIVATION_TILES_URL = "{{ TILES_BASE_URL }}";</script>
+<script>
+  window.RCPCH_DEPRIVATION_TILES_URL = "{{ TILES_BASE_URL }}";
+</script>
 ```
 
 ---
@@ -210,10 +214,10 @@ Example:
 
 ```js
 createImdMap({
-  container: 'map',
-  tilesBaseUrl: 'https://your-tile-server.example.com',
-  tilesApiKey: 'switchable-browser-token',
-  tilesApiKeyParam: 'key',
+  container: "map",
+  tilesBaseUrl: "https://your-tile-server.example.com",
+  tilesApiKey: "switchable-browser-token",
+  tilesApiKeyParam: "key",
 });
 ```
 
@@ -241,14 +245,14 @@ For England and Channel Islands, the supported pairings are:
 - `2011` era = 2011 LSOA boundaries + 2019 IMD data (England only)
 - `2021` era = 2021 LSOA boundaries + 2025 IMD data (England only); Channel Islands on 2024 boundaries
 
-| Nation | Requested era | Effective era |
-|---|---|---|
-| `all` | `2011` or `2021` | as requested |
-| `england` | `2011` or `2021` | as requested |
-| `channel_islands` | `2011` or `2021` | as requested (2024 boundaries in both) |
-| `wales` | any | always `2011` |
-| `scotland` | any | always `2011` |
-| `northern_ireland` | any | always `2011` |
+| Nation             | Requested era    | Effective era                          |
+| ------------------ | ---------------- | -------------------------------------- |
+| `all`              | `2011` or `2021` | as requested                           |
+| `england`          | `2011` or `2021` | as requested                           |
+| `channel_islands`  | `2011` or `2021` | as requested (2024 boundaries in both) |
+| `wales`            | any              | always `2011`                          |
+| `scotland`         | any              | always `2011`                          |
+| `northern_ireland` | any              | always `2011`                          |
 
 When the effective era differs from the requested era, `onWarning` is called with code `ERA_OVERRIDE`.
 
@@ -258,17 +262,17 @@ This means you can instantiate two separate UK maps in the same application, cho
 
 ```js
 const historicalMap = createImdMap({
-  container: 'map-2011',
-  tilesBaseUrl: 'https://your-tile-server.example.com',
-  initialNation: 'all',
-  initialEra: '2011',
+  container: "map-2011",
+  tilesBaseUrl: "https://your-tile-server.example.com",
+  initialNation: "all",
+  initialEra: "2011",
 });
 
 const currentMap = createImdMap({
-  container: 'map-2021',
-  tilesBaseUrl: 'https://your-tile-server.example.com',
-  initialNation: 'all',
-  initialEra: '2021',
+  container: "map-2021",
+  tilesBaseUrl: "https://your-tile-server.example.com",
+  initialNation: "all",
+  initialEra: "2021",
 });
 ```
 
@@ -354,67 +358,67 @@ evaluate `{{...}}` first. Use one of these patterns so the map library still
 receives literal tokens:
 
 1. Use `{% templatetag openvariable %}` and `{% templatetag closevariable %}`
-  to emit literal `{{` and `}}` (shown in the Django example above).
+   to emit literal `{{` and `}}` (shown in the Django example above).
 2. Wrap only the relevant JavaScript block in `{% verbatim %}...{% endverbatim %}`
-  when you do not need Django variable interpolation inside that block.
+   when you do not need Django variable interpolation inside that block.
 3. Build the token string server-side (for example in your view context) and pass
-  it in your JSON payload.
+   it in your JSON payload.
 
 **Patient tokens** (`patientTooltipText`):
 
-| Token | Value |
-|---|---|
-| `{{patientLabel}}` | The `patientLabel` style option (default `"Patient"`) |
-| `{{id}}` | The `id` field from `setPatients([{ id, lat, lon }])` |
-| `{{group}}` | The `group` field from `setPatients([{ id, lat, lon, group }])` |
+| Token              | Value                                                           |
+| ------------------ | --------------------------------------------------------------- |
+| `{{patientLabel}}` | The `patientLabel` style option (default `"Patient"`)           |
+| `{{id}}`           | The `id` field from `setPatients([{ id, lat, lon }])`           |
+| `{{group}}`        | The `group` field from `setPatients([{ id, lat, lon, group }])` |
 
 Examples:
 
 ```js
 // Show the patient id
-patientTooltipText: 'Patient ID: {{id}}'
+patientTooltipText: "Patient ID: {{id}}";
 
 // Show a custom label with id
-patientTooltipText: '{{patientLabel}} — ref: {{id}}'
+patientTooltipText: "{{patientLabel}} — ref: {{id}}";
 
 // Show group
-patientTooltipText: 'Group: {{group}}'
+patientTooltipText: "Group: {{group}}";
 ```
 
 **Lead-centre tokens** (`leadCentreTooltipText`):
 
-| Token | Value |
-|---|---|
+| Token                 | Value                                                        |
+| --------------------- | ------------------------------------------------------------ |
 | `{{leadCentreLabel}}` | The `leadCentreLabel` style option (default `"Lead centre"`) |
-| `{{label}}` | The `label` field from `setLeadCentre({ label, lat, lon })` |
+| `{{label}}`           | The `label` field from `setLeadCentre({ label, lat, lon })`  |
 
 **Area tokens** (`areaTooltipText`):
 
-| Token | Value |
-|---|---|
-| `{{areaCode}}` | Area code from tile `code` |
-| `{{areaName}}` | Area name from tile `area_name` |
-| `{{areaType}}` | Area type from tile `area_type` (fallback `LSOA`) |
-| `{{nation}}` | Nation from tile `nation` |
-| `{{imdDecile}}` | IMD decile from tile `imd_decile` |
-| `{{imdYear}}` | IMD publication year from tile `imd_year` |
-| `{{boundaryYear}}` | Boundary year from tile `year` |
-| `{{laCode}}` | Local authority code from tile `la_code` |
-| `{{laName}}` | Local authority name from tile `la_name` |
-| `{{laYear}}` | Local authority year from tile `la_year` |
-| `{{nhserCode}}` | NHS England region code from tile `nhser_code` |
-| `{{nhserName}}` | NHS England region name from tile `nhser_name` |
-| `{{icbCode}}` | ICB code from tile `icb_code` |
-| `{{icbName}}` | ICB name from tile `icb_name` |
-| `{{lhbCode}}` | Local health board code from tile `lhb_code` |
-| `{{lhbName}}` | Local health board name from tile `lhb_name` |
-| `{{decileLabel}}` | The `decileLabel` style option |
-| `{{nationLabel}}` | The `nationLabel` style option |
+| Token              | Value                                             |
+| ------------------ | ------------------------------------------------- |
+| `{{areaCode}}`     | Area code from tile `code`                        |
+| `{{areaName}}`     | Area name from tile `area_name`                   |
+| `{{areaType}}`     | Area type from tile `area_type` (fallback `LSOA`) |
+| `{{nation}}`       | Nation from tile `nation`                         |
+| `{{imdDecile}}`    | IMD decile from tile `imd_decile`                 |
+| `{{imdYear}}`      | IMD publication year from tile `imd_year`         |
+| `{{boundaryYear}}` | Boundary year from tile `year`                    |
+| `{{laCode}}`       | Local authority code from tile `la_code`          |
+| `{{laName}}`       | Local authority name from tile `la_name`          |
+| `{{laYear}}`       | Local authority year from tile `la_year`          |
+| `{{nhserCode}}`    | NHS England region code from tile `nhser_code`    |
+| `{{nhserName}}`    | NHS England region name from tile `nhser_name`    |
+| `{{icbCode}}`      | ICB code from tile `icb_code`                     |
+| `{{icbName}}`      | ICB name from tile `icb_name`                     |
+| `{{lhbCode}}`      | Local health board code from tile `lhb_code`      |
+| `{{lhbName}}`      | Local health board name from tile `lhb_name`      |
+| `{{decileLabel}}`  | The `decileLabel` style option                    |
+| `{{nationLabel}}`  | The `nationLabel` style option                    |
 
 Style can also be updated at runtime:
 
 ```js
-map.setStyle({ tooltip: { areaLabel: 'Local area' } });
+map.setStyle({ tooltip: { areaLabel: "Local area" } });
 ```
 
 ---
@@ -423,47 +427,47 @@ map.setStyle({ tooltip: { areaLabel: 'Local area' } });
 
 ### `createImdMap(options)` → `ImdMapInstance`
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `container` | `string \| HTMLElement` | — | DOM element ID or element reference |
-| `tilesBaseUrl` | `string` | — | Base URL of the tile server |
-| `tilesApiKey` | `string` | — | Optional API key appended to tile URLs as a query parameter |
-| `tilesApiKeyParam` | `string` | `'api_key'` | Query parameter name used for `tilesApiKey` |
-| `initialNation` | `Nation` | `'all'` | Starting nation filter |
-| `initialEra` | `Era` | `'2021'` | Requested era (may be overridden) |
-| `enableLocalAuthorityOverlay` | `boolean` | `false` | Show local authority boundary overlay at startup |
-| `enableHealthOverlays` | `boolean` | `false` | Show NHSER, ICB, and LHB boundary overlays at startup |
-| `showLegend` | `boolean` | `true` | Show the collapsible legend control |
-| `legendPosition` | `'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right'` | `'top-right'` | Legend control position inside map container |
-| `legendCollapsed` | `boolean` | `false` | Start with legend content collapsed |
-| `legendTitle` | `string` | `'Map layers'` | Legend header title text |
-| `showLegendLocalAuthority` | `boolean` | `true` | Show/hide local authority legend toggle row |
-| `showLegendNhser` | `boolean` | `true` | Show/hide NHS England regions legend toggle row |
-| `showLegendIcb` | `boolean` | `true` | Show/hide ICB legend toggle row |
-| `showLegendLhb` | `boolean` | `true` | Show/hide local health boards legend toggle row |
-| `mapStyleUrl` | `string` | Carto Positron | MapLibre base style URL |
-| `center` | `[lon, lat]` | UK center | Initial map center |
-| `zoom` | `number` | `5` | Initial zoom level |
-| `style` | `MapStyleOptions` | RCPCH defaults | Visual style overrides |
-| `areaTooltipMode` | `'default' \| 'template' \| 'none'` | `'default'` | Built-in area tooltip, template tooltip, or no built-in area popup |
-| `onViewChange` | `function` | — | Called when nation or era changes |
-| `onAreaHover` | `function` | — | Called on choropleth feature hover (includes pointer `lngLat`) |
-| `onAreaClick` | `function` | — | Called on choropleth feature click |
-| `onWarning` | `function` | — | Called for non-fatal issues |
+| Option                        | Type                                                           | Default        | Description                                                        |
+| ----------------------------- | -------------------------------------------------------------- | -------------- | ------------------------------------------------------------------ |
+| `container`                   | `string \| HTMLElement`                                        | —              | DOM element ID or element reference                                |
+| `tilesBaseUrl`                | `string`                                                       | —              | Base URL of the tile server                                        |
+| `tilesApiKey`                 | `string`                                                       | —              | Optional API key appended to tile URLs as a query parameter        |
+| `tilesApiKeyParam`            | `string`                                                       | `'api_key'`    | Query parameter name used for `tilesApiKey`                        |
+| `initialNation`               | `Nation`                                                       | `'all'`        | Starting nation filter                                             |
+| `initialEra`                  | `Era`                                                          | `'2021'`       | Requested era (may be overridden)                                  |
+| `enableLocalAuthorityOverlay` | `boolean`                                                      | `false`        | Show local authority boundary overlay at startup                   |
+| `enableHealthOverlays`        | `boolean`                                                      | `false`        | Show NHSER, ICB, and LHB boundary overlays at startup              |
+| `showLegend`                  | `boolean`                                                      | `true`         | Show the collapsible legend control                                |
+| `legendPosition`              | `'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right'` | `'top-right'`  | Legend control position inside map container                       |
+| `legendCollapsed`             | `boolean`                                                      | `false`        | Start with legend content collapsed                                |
+| `legendTitle`                 | `string`                                                       | `'Map layers'` | Legend header title text                                           |
+| `showLegendLocalAuthority`    | `boolean`                                                      | `true`         | Show/hide local authority legend toggle row                        |
+| `showLegendNhser`             | `boolean`                                                      | `true`         | Show/hide NHS England regions legend toggle row                    |
+| `showLegendIcb`               | `boolean`                                                      | `true`         | Show/hide ICB legend toggle row                                    |
+| `showLegendLhb`               | `boolean`                                                      | `true`         | Show/hide local health boards legend toggle row                    |
+| `mapStyleUrl`                 | `string`                                                       | Carto Positron | MapLibre base style URL                                            |
+| `center`                      | `[lon, lat]`                                                   | UK center      | Initial map center                                                 |
+| `zoom`                        | `number`                                                       | `5`            | Initial zoom level                                                 |
+| `style`                       | `MapStyleOptions`                                              | RCPCH defaults | Visual style overrides                                             |
+| `areaTooltipMode`             | `'default' \| 'template' \| 'none'`                            | `'default'`    | Built-in area tooltip, template tooltip, or no built-in area popup |
+| `onViewChange`                | `function`                                                     | —              | Called when nation or era changes                                  |
+| `onAreaHover`                 | `function`                                                     | —              | Called on choropleth feature hover (includes pointer `lngLat`)     |
+| `onAreaClick`                 | `function`                                                     | —              | Called on choropleth feature click                                 |
+| `onWarning`                   | `function`                                                     | —              | Called for non-fatal issues                                        |
 
 ### Area tooltip mode
 
 ```js
 createImdMap({
-  container: 'map',
-  tilesBaseUrl: '...',
-  areaTooltipMode: 'template',
+  container: "map",
+  tilesBaseUrl: "...",
+  areaTooltipMode: "template",
   style: {
     tooltip: {
       areaTooltipText:
-        '<strong>{{areaName}}</strong><br/>' +
-        '<span>{{decileLabel}}: {{imdDecile}}</span><br/>' +
-        '<span>{{nationLabel}}: {{nation}}</span>',
+        "<strong>{{areaName}}</strong><br/>" +
+        "<span>{{decileLabel}}: {{imdDecile}}</span><br/>" +
+        "<span>{{nationLabel}}: {{nation}}</span>",
     },
   },
 });
@@ -475,21 +479,23 @@ createImdMap({
 
 ### Instance methods
 
-| Method | Description |
-|---|---|
-| `setView({ nation?, era? })` | Update nation and/or era |
-| `setNation(nation)` | Change the nation filter |
-| `setEra(era)` | Change the requested era |
-| `setStyle(style)` | Update visual style at runtime |
-| `setOverlayVisibility({...})` | Show/hide boundary overlays (`localAuthority`, `nhser`, `icb`, `lhb`) |
-| `setPatients(data, options?)` | Set patient scatter data |
-| `clearPatients()` | Remove patient overlay |
-| `setLeadCentre(data, options?)` | Set lead-centre marker |
-| `clearLeadCentre()` | Remove lead-centre marker |
-| `getState()` | Return current map state snapshot |
-| `resize()` | Trigger MapLibre resize (use after container resize) |
-| `fitToData(options?)` | Fit to lead centre and/or patient points. Uses bounds with default 50px padding for multi-point data; single-point fallback uses zoom 6 unless overridden. |
-| `destroy()` | Remove all layers, sources, listeners, and map instance |
+| Method                          | Description                                                                                                                                                |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `setView({ nation?, era? })`    | Update nation and/or era                                                                                                                                   |
+| `setNation(nation)`             | Change the nation filter                                                                                                                                   |
+| `setEra(era)`                   | Change the requested era                                                                                                                                   |
+| `setStyle(style)`               | Update visual style at runtime                                                                                                                             |
+| `setOverlayVisibility({...})`   | Show/hide boundary overlays (`localAuthority`, `nhser`, `icb`, `lhb`)                                                                                      |
+| `setPatients(data, options?)`   | Set patient scatter data                                                                                                                                   |
+| `clearPatients()`               | Remove patient overlay                                                                                                                                     |
+| `setLeadCentre(data, options?)` | Set single lead-centre marker (scatter companion)                                                                                                          |
+| `clearLeadCentre()`             | Remove single lead-centre marker                                                                                                                           |
+| `setLeadCentres(data[], options?)` | Set multi-centre proportional symbol (bubble) map — see below                                                                                          |
+| `clearLeadCentres()`            | Remove bubble map layer and source                                                                                                                         |
+| `getState()`                    | Return current map state snapshot                                                                                                                          |
+| `resize()`                      | Trigger MapLibre resize (use after container resize)                                                                                                       |
+| `fitToData(options?)`           | Fit to lead centre and/or patient points. Uses bounds with default 50px padding for multi-point data; single-point fallback uses zoom 6 unless overridden. |
+| `destroy()`                     | Remove all layers, sources, listeners, and map instance                                                                                                    |
 
 Legend notes:
 
@@ -497,6 +503,63 @@ Legend notes:
 - A compact key is shown below toggles with boundary line swatches and an IMD decile color ramp.
 - Rows can be hidden per overlay type using `showLegendLocalAuthority`, `showLegendNhser`, `showLegendIcb`, and `showLegendLhb`.
 - Nation-specific rows stay visible but are disabled when not applicable (for example, `England only` or `Wales only`).
+- The legend panel hides automatically when `nation === 'channel_islands'` (no boundary overlays apply).
+
+---
+
+## Multi-centre bubble map (`setLeadCentres`)
+
+For national overview views, `setLeadCentres()` renders an array of lead centres as a proportional symbol (bubble) map alongside the choropleth. Bubble radius encodes one numeric metric (e.g. patient count) and bubble colour encodes a second (e.g. median HbA1c). All values are pre-computed server-side.
+
+```js
+map.setLeadCentres([
+  { lat: 51.52, lon: -0.10, label: 'GOSH',     total_patients: 312, median_hba1c: 58, dominant_type: 'type1', pct_type1: 68, pct_type2: 18, pct_mody: 10, pct_cfrd: 4 },
+  { lat: 53.48, lon: -2.24, label: 'Manchester', total_patients: 198, median_hba1c: 63, dominant_type: 'type2', pct_type1: 30, pct_type2: 52, pct_mody: 10, pct_cfrd: 8 },
+], { strict: false });
+```
+
+Configure rendering via `style.leadCentres`:
+
+```js
+// Continuous colour mode (default) — numeric colorField → gradient
+createImdMap({
+  style: {
+    leadCentres: {
+      sizeField: 'total_patients',  sizeLabel: 'Patients',
+      colorField: 'median_hba1c',   colorLabel: 'Median HbA1c', colorUnit: 'mmol/mol',
+      colorMode: 'continuous',
+      colorScale: ['#2166ac', '#f7f7f7', '#d6604d'],  // blue → white → red
+      minRadius: 8, maxRadius: 40,
+    },
+  },
+});
+
+// Categorical colour mode — string colorField → discrete palette + tooltip breakdown bars
+createImdMap({
+  style: {
+    leadCentres: {
+      sizeField: 'total_patients', sizeLabel: 'Patients',
+      colorField: 'dominant_type', colorLabel: 'Dominant diabetes type',
+      colorMode: 'categorical',
+      colorByCategory: { type1: '#4e79a7', type2: '#f28e2b', mody: '#59a14f', cfrd: '#e15759' },
+      breakdownFields: [
+        { field: 'pct_type1', label: 'Type 1', color: '#4e79a7' },
+        { field: 'pct_type2', label: 'Type 2', color: '#f28e2b' },
+        { field: 'pct_mody',  label: 'MODY',   color: '#59a14f' },
+        { field: 'pct_cfrd',  label: 'CFRD',   color: '#e15759' },
+      ],
+    },
+  },
+});
+```
+
+Switching between metrics (e.g. "colour by % Type 1") does not require a data reload:
+
+```js
+map.setStyle({ leadCentres: { colorMode: 'continuous', colorField: 'pct_type1', colorLabel: 'Type 1 %', colorUnit: '%' } });
+```
+
+`setLeadCentre()` (singular) is unaffected — existing single-centre scatter views work as before.
 
 ---
 
@@ -505,8 +568,11 @@ Legend notes:
 When a map container is replaced by an HTMX swap, call `destroy()` first to prevent memory leaks:
 
 ```js
-document.addEventListener('htmx:beforeSwap', function (e) {
-  if (window._npdaMapInstance && e.detail.target.contains(document.getElementById('organisation-cases-map'))) {
+document.addEventListener("htmx:beforeSwap", function (e) {
+  if (
+    window._npdaMapInstance &&
+    e.detail.target.contains(document.getElementById("organisation-cases-map"))
+  ) {
     window._npdaMapInstance.destroy();
     window._npdaMapInstance = null;
   }

@@ -1,5 +1,5 @@
-import { Map as MaplibreMap, Popup, AttributionControl } from 'maplibre-gl';
-import type { Feature, Point } from 'geojson';
+import { Map as MaplibreMap, Popup, AttributionControl } from "maplibre-gl";
+import type { Feature, Point } from "geojson";
 import type {
   CreateImdMapOptions,
   ImdMapInstance,
@@ -10,16 +10,20 @@ import type {
   PatientLayerOptions,
   LeadCentreInput,
   LeadCentreOptions,
-} from '../types/public';
-import { createInitialState } from './state';
-import { resolveEffectiveEra, willEraBeOverridden } from './resolver';
+  LeadCentreBubbleInput,
+  LeadCentresOptions,
+} from "../types/public";
+import { createInitialState } from "./state";
+import { resolveEffectiveEra, willEraBeOverridden } from "./resolver";
 import {
   addOrUpdateChoroplethSources,
   addOrUpdatePatientsSource,
   addOrUpdateLeadCentreSource,
+  addOrUpdateLeadCentresSource,
+  removeLeadCentresSource,
   PATIENTS_SOURCE_ID,
   LEAD_CENTRE_SOURCE_ID,
-} from '../map/sources';
+} from "../map/sources";
 import {
   addChoroplethLayers,
   removeChoroplethLayers,
@@ -29,18 +33,24 @@ import {
   removePatientsLayer,
   addOrUpdateLeadCentreLayer,
   removeLeadCentreLayer,
-} from '../map/layers';
+  addOrUpdateLeadCentresLayer,
+  removeLeadCentresLayer,
+} from "../map/layers";
 import {
   attachChoroplethInteraction,
   attachPatientInteraction,
   attachLeadCentreInteraction,
-} from '../map/popups';
-import { normalizePatientInput } from '../adapters/patientInput';
-import { normalizeLeadCentreInput } from '../overlays/leadCentre';
+  attachLeadCentresInteraction,
+} from "../map/popups";
+import { normalizePatientInput } from "../adapters/patientInput";
+import {
+  normalizeLeadCentreInput,
+  normalizeLeadCentresInput,
+} from "../overlays/leadCentre";
 import {
   addOrUpdateLocalAuthorityOverlay,
   hideLocalAuthorityOverlay,
-} from '../overlays/localAuthority';
+} from "../overlays/localAuthority";
 import {
   addOrUpdateNhserOverlay,
   addOrUpdateIcbOverlay,
@@ -48,10 +58,14 @@ import {
   hideNhserOverlay,
   hideIcbOverlay,
   hideLhbOverlay,
-} from '../overlays/healthBoundaries';
-import { createLegendControl, type LegendController } from '../map/legend';
-import { mergeStyle, DEFAULT_STYLE } from '../map/styles';
-import { logger } from '../utils/logging';
+} from "../overlays/healthBoundaries";
+import {
+  createLegendControl,
+  updateBubbleLegendContext,
+  type LegendController,
+} from "../map/legend";
+import { mergeStyle, DEFAULT_STYLE } from "../map/styles";
+import { logger } from "../utils/logging";
 
 // Default center and zoom for a UK-wide view
 const UK_CENTER: [number, number] = [-2.5, 54.0];
@@ -60,7 +74,7 @@ const UK_ZOOM = 5;
 export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   // ── Resolve container ───────────────────────────────────────────────────────
   const containerEl =
-    typeof options.container === 'string'
+    typeof options.container === "string"
       ? document.getElementById(options.container)
       : options.container;
 
@@ -70,9 +84,9 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     );
   }
 
-  const tilesBaseUrl = options.tilesBaseUrl ?? '';
+  const tilesBaseUrl = options.tilesBaseUrl ?? "";
   if (!tilesBaseUrl) {
-    logger.warn('No tilesBaseUrl provided. Choropleth tiles will not load.');
+    logger.warn("No tilesBaseUrl provided. Choropleth tiles will not load.");
   }
   const tileAuth = {
     apiKey: options.tilesApiKey,
@@ -81,7 +95,10 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
 
   // ── Resolve style and initial state ────────────────────────────────────────
   let resolvedStyle = mergeStyle(DEFAULT_STYLE, options.style);
-  let state = createInitialState(options.initialNation ?? 'all', options.initialEra ?? '2021');
+  let state = createInitialState(
+    options.initialNation ?? "all",
+    options.initialEra ?? "2021",
+  );
 
   if (options.enableLocalAuthorityOverlay) {
     state = { ...state, overlays: { ...state.overlays, localAuthority: true } };
@@ -99,9 +116,9 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   }
 
   const showLegend = options.showLegend ?? true;
-  const legendPosition = options.legendPosition ?? 'top-right';
+  const legendPosition = options.legendPosition ?? "top-right";
   const legendCollapsed = options.legendCollapsed ?? false;
-  const legendTitle = options.legendTitle ?? 'Map layers';
+  const legendTitle = options.legendTitle ?? "Map layers";
   const legendVisibility = {
     localAuthority: options.showLegendLocalAuthority ?? true,
     nhser: options.showLegendNhser ?? true,
@@ -116,7 +133,7 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     willEraBeOverridden(options.initialNation, options.initialEra)
   ) {
     const warning = {
-      code: 'ERA_OVERRIDE',
+      code: "ERA_OVERRIDE",
       message: `Era '${options.initialEra}' is not supported for nation '${options.initialNation}'. Effective era will be '${state.effectiveEra}'.`,
     };
     logger.warn(warning.message);
@@ -128,7 +145,7 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     container: containerEl,
     style:
       options.mapStyleUrl ??
-      'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
     center: options.center ?? UK_CENTER,
     zoom: options.zoom ?? UK_ZOOM,
     attributionControl: false,
@@ -142,9 +159,14 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   let mapLoaded = false;
   let pendingPatientFeatures: Feature<Point>[] | null = null;
   let pendingLeadCentreFeature: Feature<Point> | null = null;
+  let pendingLeadCentresFeatures: Feature<Point>[] | null = null;
   let pendingFitToData: { zoom?: number; padding?: number } | null = null;
   let patientInteractionAttached = false;
   let leadCentreInteractionAttached = false;
+  let leadCentresInteractionAttached = false;
+
+  // ── Bubble context (auto-computed from data, drives expressions + legend) ────
+  let bubbleCtx = { sizeMin: 0, sizeMax: 0, colorMin: 0, colorMax: 0 };
 
   // ── Stored lead centre coordinate for fitToData() ───────────────────────────
   let storedLeadCentreCoord: [number, number] | null = null;
@@ -160,7 +182,7 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   function applyFitToData(zoom?: number, padding?: number): void {
     const coords = getFitCoords();
     if (!coords.length) {
-      logger.warn('No patient or lead centre data to fit to.');
+      logger.warn("No patient or lead centre data to fit to.");
       return;
     }
 
@@ -197,12 +219,17 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
   function applyOverlayVisibility(): void {
     if (!mapLoaded || !tilesBaseUrl) return;
     const nation = state.nation;
-    const canShowNhser = nation === 'all' || nation === 'england';
-    const canShowIcb = nation === 'all' || nation === 'england';
-    const canShowLhb = nation === 'all' || nation === 'wales';
+    const canShowNhser = nation === "all" || nation === "england";
+    const canShowIcb = nation === "all" || nation === "england";
+    const canShowLhb = nation === "all" || nation === "wales";
 
     if (state.overlays.localAuthority) {
-      addOrUpdateLocalAuthorityOverlay(map, tilesBaseUrl, resolvedStyle, tileAuth);
+      addOrUpdateLocalAuthorityOverlay(
+        map,
+        tilesBaseUrl,
+        resolvedStyle,
+        tileAuth,
+      );
     } else {
       hideLocalAuthorityOverlay(map);
     }
@@ -248,13 +275,13 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       state,
       visibility: legendVisibility,
       onToggle: (key, nextValue) => {
-        if (key === 'localAuthority') {
+        if (key === "localAuthority") {
           setOverlayVisibilityState({ localAuthority: nextValue });
-        } else if (key === 'nhser') {
+        } else if (key === "nhser") {
           setOverlayVisibilityState({ nhser: nextValue });
-        } else if (key === 'icb') {
+        } else if (key === "icb") {
           setOverlayVisibilityState({ icb: nextValue });
-        } else if (key === 'lhb') {
+        } else if (key === "lhb") {
           setOverlayVisibilityState({ lhb: nextValue });
         }
       },
@@ -263,15 +290,20 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
 
   logger.debug(`tilesBaseUrl resolved to: "${tilesBaseUrl}"`);
   if (tileAuth.apiKey) {
-    logger.debug('Tile API key is configured for tile URL requests.');
+    logger.debug("Tile API key is configured for tile URL requests.");
   }
 
   // ── Map load handler ────────────────────────────────────────────────────────
-  map.on('load', () => {
+  map.on("load", () => {
     mapLoaded = true;
 
     if (tilesBaseUrl) {
-      addOrUpdateChoroplethSources(map, tilesBaseUrl, state.effectiveEra, tileAuth);
+      addOrUpdateChoroplethSources(
+        map,
+        tilesBaseUrl,
+        state.effectiveEra,
+        tileAuth,
+      );
       addChoroplethLayers(map, state.nation, state.effectiveEra, resolvedStyle);
     }
 
@@ -280,8 +312,9 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     attachChoroplethInteraction(map, popup, resolvedStyle, options);
 
     if (pendingPatientFeatures) {
-      storedPatientCoords = pendingPatientFeatures
-        .map((f) => f.geometry.coordinates as [number, number]);
+      storedPatientCoords = pendingPatientFeatures.map(
+        (f) => f.geometry.coordinates as [number, number],
+      );
       addOrUpdatePatientsSource(map, pendingPatientFeatures);
       addOrUpdatePatientsLayer(map, resolvedStyle);
       if (!patientInteractionAttached) {
@@ -293,7 +326,10 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     }
 
     if (pendingLeadCentreFeature) {
-      storedLeadCentreCoord = pendingLeadCentreFeature.geometry.coordinates as [number, number];
+      storedLeadCentreCoord = pendingLeadCentreFeature.geometry.coordinates as [
+        number,
+        number,
+      ];
       addOrUpdateLeadCentreSource(map, pendingLeadCentreFeature);
       addOrUpdateLeadCentreLayer(map, resolvedStyle);
       if (!leadCentreInteractionAttached) {
@@ -304,10 +340,23 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       pendingLeadCentreFeature = null;
     }
 
+    if (pendingLeadCentresFeatures) {
+      addOrUpdateLeadCentresSource(map, pendingLeadCentresFeatures);
+      addOrUpdateLeadCentresLayer(map, resolvedStyle, bubbleCtx);
+      if (!leadCentresInteractionAttached) {
+        attachLeadCentresInteraction(map, popup, resolvedStyle, bubbleCtx);
+        leadCentresInteractionAttached = true;
+      }
+      state = { ...state, hasLeadCentres: true };
+      updateBubbleLegendContext(bubbleCtx);
+      legendController?.update(state, resolvedStyle);
+      pendingLeadCentresFeatures = null;
+    }
+
     if (pendingFitToData) {
       const { zoom, padding } = pendingFitToData;
       // Defer camera movement until after first idle to avoid interrupting layer rendering.
-      map.once('idle', () => {
+      map.once("idle", () => {
         applyFitToData(zoom, padding);
       });
       pendingFitToData = null;
@@ -321,7 +370,7 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
 
     if (willEraBeOverridden(newNation, newEra)) {
       const warning = {
-        code: 'ERA_OVERRIDE',
+        code: "ERA_OVERRIDE",
         message: `Era '${newEra}' overridden to '${newEffectiveEra}' for nation '${newNation}'.`,
       };
       logger.warn(warning.message);
@@ -331,13 +380,23 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
     const eraChanged = newEffectiveEra !== state.effectiveEra;
     const nationChanged = newNation !== state.nation;
 
-    state = { ...state, nation: newNation, era: newEra, effectiveEra: newEffectiveEra };
+    state = {
+      ...state,
+      nation: newNation,
+      era: newEra,
+      effectiveEra: newEffectiveEra,
+    };
 
     if (mapLoaded && tilesBaseUrl) {
       if (eraChanged) {
         // Era change: sources must serve new table family; rebuild layers.
         removeChoroplethLayers(map);
-        addOrUpdateChoroplethSources(map, tilesBaseUrl, newEffectiveEra, tileAuth);
+        addOrUpdateChoroplethSources(
+          map,
+          tilesBaseUrl,
+          newEffectiveEra,
+          tileAuth,
+        );
         addChoroplethLayers(map, newNation, newEffectiveEra, resolvedStyle);
       } else if (nationChanged) {
         // Nation change only: sources stay the same, just update filter expressions.
@@ -345,7 +404,11 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       }
     }
 
-    options.onViewChange?.({ nation: newNation, era: newEra, effectiveEra: newEffectiveEra });
+    options.onViewChange?.({
+      nation: newNation,
+      era: newEra,
+      effectiveEra: newEffectiveEra,
+    });
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -373,6 +436,9 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
         }
         if (state.hasLeadCentre) {
           addOrUpdateLeadCentreLayer(map, resolvedStyle);
+        }
+        if (state.hasLeadCentres) {
+          addOrUpdateLeadCentresLayer(map, resolvedStyle, bubbleCtx);
         }
         legendController?.update(state, resolvedStyle);
       }
@@ -415,14 +481,19 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       storedPatientCoords = [];
       if (!mapLoaded) return;
       removePatientsLayer(map);
-      if (map.getSource(PATIENTS_SOURCE_ID)) map.removeSource(PATIENTS_SOURCE_ID);
+      if (map.getSource(PATIENTS_SOURCE_ID))
+        map.removeSource(PATIENTS_SOURCE_ID);
       state = { ...state, hasPatients: false };
     },
 
     setLeadCentre(data: LeadCentreInput, _options?: LeadCentreOptions) {
       const feature = normalizeLeadCentreInput(data);
       if (!feature) {
-        const warning = { code: 'INVALID_LEAD_CENTRE', message: 'Lead centre data could not be resolved to valid coordinates.' };
+        const warning = {
+          code: "INVALID_LEAD_CENTRE",
+          message:
+            "Lead centre data could not be resolved to valid coordinates.",
+        };
         logger.warn(warning.message);
         options.onWarning?.(warning);
         return;
@@ -448,8 +519,75 @@ export function createImdMap(options: CreateImdMapOptions): ImdMapInstance {
       storedLeadCentreCoord = null;
       if (!mapLoaded) return;
       removeLeadCentreLayer(map);
-      if (map.getSource(LEAD_CENTRE_SOURCE_ID)) map.removeSource(LEAD_CENTRE_SOURCE_ID);
+      if (map.getSource(LEAD_CENTRE_SOURCE_ID))
+        map.removeSource(LEAD_CENTRE_SOURCE_ID);
       state = { ...state, hasLeadCentre: false };
+    },
+
+    setLeadCentres(
+      data: LeadCentreBubbleInput[],
+      centresOptions?: LeadCentresOptions,
+    ) {
+      const features = normalizeLeadCentresInput(
+        data,
+        centresOptions,
+        options.onWarning,
+      );
+
+      // Auto-compute size and colour min/max from the resolved features
+      const lc = resolvedStyle.leadCentres;
+      const sizeField = lc.sizeField ?? "size";
+      const colorField = lc.colorField ?? "color_value";
+
+      let sizeMin = Infinity;
+      let sizeMax = -Infinity;
+      let colorMin = Infinity;
+      let colorMax = -Infinity;
+
+      for (const f of features) {
+        const sv = f.properties?.[sizeField];
+        const cv = f.properties?.[colorField];
+        if (typeof sv === "number" && Number.isFinite(sv)) {
+          if (sv < sizeMin) sizeMin = sv;
+          if (sv > sizeMax) sizeMax = sv;
+        }
+        if (typeof cv === "number" && Number.isFinite(cv)) {
+          if (cv < colorMin) colorMin = cv;
+          if (cv > colorMax) colorMax = cv;
+        }
+      }
+
+      // Fall back to 0/1 ranges when no numeric data present
+      bubbleCtx = {
+        sizeMin: Number.isFinite(sizeMin) ? sizeMin : 0,
+        sizeMax: Number.isFinite(sizeMax) ? sizeMax : 1,
+        colorMin: Number.isFinite(colorMin) ? colorMin : 0,
+        colorMax: Number.isFinite(colorMax) ? colorMax : 1,
+      };
+
+      if (!mapLoaded) {
+        pendingLeadCentresFeatures = features;
+        return;
+      }
+
+      addOrUpdateLeadCentresSource(map, features);
+      addOrUpdateLeadCentresLayer(map, resolvedStyle, bubbleCtx);
+      if (!leadCentresInteractionAttached) {
+        attachLeadCentresInteraction(map, popup, resolvedStyle, bubbleCtx);
+        leadCentresInteractionAttached = true;
+      }
+      state = { ...state, hasLeadCentres: true };
+      updateBubbleLegendContext(bubbleCtx);
+      legendController?.update(state, resolvedStyle);
+    },
+
+    clearLeadCentres() {
+      pendingLeadCentresFeatures = null;
+      if (!mapLoaded) return;
+      removeLeadCentresLayer(map);
+      removeLeadCentresSource(map);
+      state = { ...state, hasLeadCentres: false };
+      legendController?.update(state, resolvedStyle);
     },
 
     getState() {
