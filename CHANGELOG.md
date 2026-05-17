@@ -8,6 +8,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-05-17
+
 ### Added
 
 - **Multi-lead-centre bubble map** (`setLeadCentres()` / `clearLeadCentres()`) — closes issue #6.
@@ -23,12 +25,19 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   - Legend gains a bubble size scale (3 representative circles) and a colour scale bar or
     category swatch list, shown only when `setLeadCentres()` has been called.
   - All field names, labels, and units are consumer-configurable via `style.leadCentres`.
-  - Uses separate MapLibre source (`rcpch-imd-lead-centres`) and layer
-    (`rcpch-imd-lead-centres`) from the existing singular `setLeadCentre()` — fully backward compatible.
+  - Uses separate MapLibre source (`rcpch-imd-lead-centres`) and layer from the existing
+    singular `setLeadCentre()` — fully backward compatible.
   - Invalid entries are skipped with `onWarning` callbacks or throw in `strict` mode.
 - Added `hasLeadCentres: boolean` to `ImdMapState`.
 - Added `LeadCentreBubbleInput`, `LeadCentresStyleOptions`, `LeadCentresOptions`,
   `LeadCentresBreakdownField` to the public type surface.
+
+### Fixed
+
+- Channel Islands tooltip now shows **N/A** for `imd_decile` and `imd_year` (previously
+  rendered as `0` because no IMD data exists for the Channel Islands).
+- Legend panel now hides completely when `nation === 'channel_islands'` — health boundary
+  overlay rows (NHSER, ICBs, LHBs, local authorities) do not apply to that nation.
 
 ## [0.4.0] — 2026-05-16
 
