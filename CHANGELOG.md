@@ -8,6 +8,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-05-17
+
+### Fixed
+
+- Legend panel `max-height` now computed in JavaScript via `ResizeObserver` on the map
+  container element, rather than CSS `calc(100% - 24px)`. The CSS approach failed because
+  MapLibre ctrl container ancestors use `height: auto`, so the percentage resolved to nothing.
+  The observer is disconnected in `destroy()` to prevent memory leaks.
+
 ## [0.5.1] — 2026-05-17
 
 ### Fixed
