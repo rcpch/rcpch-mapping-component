@@ -8,6 +8,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-05-17
+
+### Fixed
+
+- Legend panel is now scrollable when its content exceeds the map container height — the header
+  stays fixed and only the body scrolls, preventing the panel from overflowing off-screen.
+
 ## [0.5.0] — 2026-05-17
 
 ### Added

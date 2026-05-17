@@ -161,6 +161,7 @@ export function createLegendControl(
   const headerBtn = document.createElement("button");
   const headerTitle = document.createElement("span");
   const headerIcon = document.createElement("span");
+  const scrollBody = document.createElement("div");
   const body = document.createElement("div");
   const keySection = document.createElement("div");
 
@@ -169,11 +170,13 @@ export function createLegendControl(
   headerTitle.textContent = input.title;
   headerIcon.textContent = collapsed ? "+" : "-";
 
+  scrollBody.appendChild(body);
+  scrollBody.appendChild(keySection);
+
   headerBtn.appendChild(headerTitle);
   headerBtn.appendChild(headerIcon);
   panel.appendChild(headerBtn);
-  panel.appendChild(body);
-  panel.appendChild(keySection);
+  panel.appendChild(scrollBody);
   root.appendChild(panel);
   input.container.appendChild(root);
 
@@ -190,6 +193,10 @@ export function createLegendControl(
     const width = legend?.width ?? 220;
     const boxShadow = legend?.boxShadow ?? "0 6px 18px rgba(0, 0, 0, 0.12)";
 
+    root.style.maxHeight = "calc(100% - 24px)";
+    root.style.display = "flex";
+    root.style.flexDirection = "column";
+
     panel.style.background = backgroundColor;
     panel.style.color = textColor;
     panel.style.border = `1px solid ${borderColor}`;
@@ -197,6 +204,9 @@ export function createLegendControl(
     panel.style.width = `${width}px`;
     panel.style.boxShadow = boxShadow;
     panel.style.overflow = "hidden";
+    panel.style.display = "flex";
+    panel.style.flexDirection = "column";
+    panel.style.minHeight = "0";
 
     headerBtn.style.width = "100%";
     headerBtn.style.border = "0";
@@ -211,17 +221,23 @@ export function createLegendControl(
     headerBtn.style.fontSize = `${fontSize}px`;
     headerBtn.style.fontFamily = fontFamily;
     headerBtn.style.textAlign = "left";
+    headerBtn.style.flexShrink = "0";
+
+    scrollBody.style.display = collapsed ? "none" : "flex";
+    scrollBody.style.flexDirection = "column";
+    scrollBody.style.overflowY = "auto";
+    scrollBody.style.minHeight = "0";
 
     body.style.padding = "0 12px 10px";
-    body.style.display = collapsed ? "none" : "block";
     body.style.fontFamily = fontFamily;
     body.style.fontSize = `${fontSize}px`;
+    body.style.flexShrink = "0";
 
     keySection.style.padding = "0 12px 10px";
-    keySection.style.display = collapsed ? "none" : "block";
     keySection.style.fontFamily = fontFamily;
     keySection.style.fontSize = `${Math.max(fontSize - 1, 11)}px`;
     keySection.style.borderTop = `1px solid ${borderColor}`;
+    keySection.style.flexShrink = "0";
   }
 
   function renderRows(): void {
@@ -537,8 +553,7 @@ export function createLegendControl(
     collapsed = !collapsed;
     headerBtn.setAttribute("aria-expanded", String(!collapsed));
     headerIcon.textContent = collapsed ? "+" : "-";
-    body.style.display = collapsed ? "none" : "block";
-    keySection.style.display = collapsed ? "none" : "block";
+    scrollBody.style.display = collapsed ? "none" : "flex";
   });
 
   applyStyle();
