@@ -29,7 +29,7 @@
     "@types/geojson": "^7946.0.14",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^4.1.9",
-    "maplibre-gl": "^4.7.0",
+    "maplibre-gl": "^6.4.1",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^4.1.9"
